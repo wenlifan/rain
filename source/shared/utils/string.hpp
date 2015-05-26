@@ -9,17 +9,17 @@
 namespace Rn
 {
 
-std::size_t length(std::string const &str)
+inline std::size_t length(std::string const &str)
 {
     return str.length();
 }
 
-std::size_t length(char)
+inline std::size_t length(char)
 {
     return 1;
 }
 
-std::size_t length(char const *str)
+inline std::size_t length(char const *str)
 {
     return std::strlen(str);
 }
