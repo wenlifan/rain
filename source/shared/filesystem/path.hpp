@@ -2,30 +2,38 @@
 
 #include <string>
 
-extern "C"
-{ 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-}
-
 namespace Rn
 {
 
 class Path
 {
 public:
+    Path() = default;
+
     explicit Path(std::string path)
-        : mPath(path)
+        : mPath(std::move(path))
     {}
+
+    //Path(Path const &) = default;
+    //Path(Path &&) = default;
+    //Path & operator = (Path const &) = default;
+    //Path & operator = (Path &&) = default;
     
+    bool absolute() const
+    {
+        return !mPath.empty() && mPath.front() == '/';
+    }
+
+    bool relative() const
+    {
+        return !mPath.empty() && mPath.front() != '/';
+    }
+
+    bool append(std::string str)
+    {
+    }
 
 private:
-    struct stat mStat;
-    DIR * mDir = nullptr;
-
-    bool mStatus = false;
     std::string mPath;
 };
 
