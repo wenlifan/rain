@@ -167,7 +167,7 @@ private:                                                                    \
 do { \
 if (!(bool_expr))                                                           \
 {                                                                           \
-    TEST_LOG(__FILE__, "(ln ", __LINE__, "): ", "Expected Fail -- ");       \
+    TEST_LOG(__FILE__, " (line ", __LINE__, "): ", "Expected Fail -- ");    \
     Rn::details::testLogParams(__VA_ARGS__);                                \
     retflag__ = 1;                                                          \
 } \
@@ -176,7 +176,7 @@ if (!(bool_expr))                                                           \
 #define REQUIRED(bool_expr, ...)                                            \
 if (!(bool_expr))                                                           \
 {                                                                           \
-    TEST_LOG(__FILE__, "(ln ", __LINE__, "): ", "Required Fail -- ");       \
+    TEST_LOG(__FILE__, " (line ", __LINE__, "): ", "Required Fail -- ");    \
     Rn::details::testLogParams(__VA_ARGS__);                                \
     retflag__ = 2;                                                          \
     return;                                                                 \

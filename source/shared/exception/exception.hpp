@@ -15,20 +15,18 @@ public:
             const char *filename = nullptr,
             int linenum = -1)
     {
-        mWhat = "[Exception Occured]\n";
-
         if (type.empty())
             type = "UnKnow";
 
-        mWhat = mWhat + "Type:\t" + std::move(type) + '\n';
-        mWhat = mWhat + "What:\t" + std::move(what) + '\n';
+        mWhat = mWhat + "### " + std::move(type);
 
         if (filename != nullptr)
         {
-            mWhat = mWhat + "Locate:\tLine "
+            mWhat = mWhat + ": " + filename + " (line "
                     + std::to_string(linenum)
-                    + " in " + filename + '\n';
+                    + "): ";
         }
+        mWhat = mWhat + std::move(what) + '\n';
     }
 
     virtual const char * what() const noexcept override
