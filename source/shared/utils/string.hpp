@@ -99,4 +99,4 @@ std::vector<std::string> split(std::string const &str, T v)
 }
 
 
-} // !Rn
+} // !namespace Rn
