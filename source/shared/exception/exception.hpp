@@ -18,7 +18,7 @@ public:
         if (type.empty())
             type = "UnKnow";
 
-        mWhat = mWhat + "### " + std::move(type);
+        mWhat = mWhat + std::move(type);
 
         if (filename != nullptr)
         {
@@ -26,7 +26,7 @@ public:
                     + std::to_string(linenum)
                     + "): ";
         }
-        mWhat = mWhat + std::move(what) + '\n';
+        mWhat = mWhat + std::move(what);
     }
 
     virtual const char * what() const noexcept override
