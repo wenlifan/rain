@@ -4,5 +4,5 @@
 
 namespace Rn
 {
-DefineException(FileSystemException);
+DEFINE_EXCEPTION(FileSystemException);
 }

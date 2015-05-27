@@ -42,10 +42,10 @@ private:
 
 }
 
-#define Throw(name, what) \
+#define THROW(name, what) \
     throw name(what, #name, __FILE__, __LINE__)
 
-#define DefineException(name) \
+#define DEFINE_EXCEPTION(name) \
 class name : public Rn::RainException \
 { \
 public: \
