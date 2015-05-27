@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef RAIN_UNIT_TEST
+
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -182,3 +184,4 @@ if (!(bool_expr))                                                           \
     return;                                                                 \
 }
 
+#endif // !RAIN_UNIT_TEST

@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "utils.hpp"
+
 namespace Rn
 {
 
