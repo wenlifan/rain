@@ -31,13 +31,24 @@ public:
         return !mPath.empty() && mPath.front() != '/';
     }
 
-    bool append(std::string str)
+    void append(std::string str)
     {
+        auto s = Rn::trim(std::move(str));
+        if (mPath.empty())
+        {
+            mPath = std::move(s);
+            return;
+        }
+
+        if (mPath[mPath.size()-1] != '/')
+            mPath += '/';
+        
+        mPath += std::move(s);
     }
 
 private:
     std::string mPath;
 };
 
-}
+} // !namespace Rn
 
