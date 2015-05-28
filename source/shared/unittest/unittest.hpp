@@ -14,8 +14,6 @@ namespace Rn
 namespace details
 {
 
-struct Test;
-
 class TestContainer
 {
     TestContainer() = default;
@@ -28,25 +26,12 @@ public:
         return instance;
     }
 
-    void push_back(Test *t)
+    void push_back(std::function<void()> f)
     {
-        mTestVec.push_back(t);
+        mTestVec.push_back(std::move(f));
     }
 
-    std::vector<Test *> mTestVec;
-};
-
-struct Test
-{
-    Test()
-    {
-        TestContainer::getInstance().push_back(this);
-    }
-
-    virtual ~Test()
-    {}
-
-    virtual void test() = 0;
+    std::vector<std::function<void()>> mTestVec;
 };
 
 template <typename ...Args>
@@ -84,9 +69,7 @@ void testLogFail(Args && ...args)
     testLog("[ FAIL ] ", std::forward<Args>(args)...);
 }
 
-template <typename ...Args>
-void testSubBegin(Args && ...args)
-{
+template <typename ...Args> void testSubBegin(Args && ...args) {
     testLog("    [ TEST ] ", std::forward<Args>(args)...);
 }
 
@@ -106,75 +89,64 @@ void testSubFail(Args && ...args)
 
 } // !namespace Rn
 
+
 #define TEST_LOG(...)                                                       \
     Rn::details::testLog("        > ", __VA_ARGS__)
 
 
 #define TEST_BEGIN(name)                                                    \
-class test__##name : public Rn::details::Test                               \
-{                                                                           \
-public:                                                                     \
-    test__##name();                                                         \
-    virtual void test() override                                            \
-    {                                                                       \
+auto test_func_##name##__ = [] {                                            \
+    auto test_name = #name;                                                 \
+    auto main_test = [test_name] {                                          \
+        std::vector<std::pair<std::string, std::function<void()>>> tests;   \
+        auto test_flag__ = true;                                            \
+        auto fail_count = 0;                                                \
+        (([]{}
+
+
+#define TEST_END                                                            \
+        ));                                                                 \
         Rn::details::testLogBegin(                                          \
-                #name, " -- total: ", mTests.size(), " --\n");              \
-        for (auto &i : mTests)                                              \
-        {                                                                   \
+                test_name, " -- total: ", tests.size(), " --\n");           \
+        for (auto &i : tests) {                                             \
             Rn::details::testSubBegin(i.first);                             \
-            auto flag = true;                                               \
-            try                                                             \
-            {                                                               \
-                flag = i.second();                                          \
+            test_flag__ = true;                                             \
+            try {                                                           \
+                i.second();                                                 \
             }                                                               \
-            catch (std::exception &e)                                       \
-            {                                                               \
+            catch (std::exception &e) {                                     \
                 Rn::details::testLog('\n');                                 \
                 TEST_LOG(e.what());                                         \
-                flag = false;                                               \
+                test_flag__ = false;                                        \
             }                                                               \
-            if (flag)                                                       \
-            {                                                               \
+            if (test_flag__)                                                \
                 Rn::details::testSubOK('\n');                               \
-            }                                                               \
             else                                                            \
             {                                                               \
-                mFailCount++;                                               \
+                fail_count++ ;                                              \
                 Rn::details::testLog('\n');                                 \
                 Rn::details::testSubFail('\n');                             \
             }                                                               \
         }                                                                   \
-        if (mFailCount > 0)                                                 \
-        {                                                                   \
+        if (fail_count > 0) {                                               \
             Rn::details::testLogFail(                                       \
                     "-- total: ",                                           \
-                    mTests.size(),                                          \
+                    tests.size(),                                           \
                     " -- failed: ",                                         \
-                    mFailCount,                                             \
+                    fail_count,                                             \
                     " --\n");                                               \
         }                                                                   \
         else                                                                \
-        {                                                                   \
             Rn::details::testLogOK('\n');                                   \
-        }                                                                   \
-    }                                                                       \
-private:                                                                    \
-    std::size_t mFailCount = 0;                                             \
-    std::vector<std::pair<std::string, std::function<bool()>>> mTests;      \
-} test__##name##__;                                                         \
-test__##name::test__##name()                                                \
-{                                                                           \
-    (([]{ auto retflag__ = true;
-
-
-#define TEST_END                                                            \
-    return retflag__; }));                                                  \
-}                                                                           \
+    };                                                                      \
+    Rn::details::TestContainer::getInstance().push_back(main_test);         \
+    return 0;                                                               \
+}();
 
 
 #define TEST(name)                                                          \
-    return retflag__; }));                                                  \
-    mTests.push_back(std::make_pair(#name, []{ auto retflag__ = true;
+    ));                                                                     \
+    tests.push_back(std::make_pair(#name, [&test_flag__]
 
 
 #define EXPECTED(bool_expr, ...)                                            \
@@ -184,7 +156,7 @@ if (!(bool_expr))                                                           \
     Rn::details::testLog('\n');                                             \
     TEST_LOG(__FILE__, " (line ", __LINE__, "): ", "Expected Fail -- ");    \
     Rn::details::testLogParams(__VA_ARGS__);                                \
-    retflag__ = false;                                                      \
+    test_flag__ = false;                                                    \
 }                                                                           \
 } while(false)
 
@@ -196,10 +168,11 @@ if (!(bool_expr))                                                           \
     Rn::details::testLog('\n');                                             \
     TEST_LOG(__FILE__, " (line ", __LINE__, "): ", "Required Fail -- ");    \
     Rn::details::testLogParams(__VA_ARGS__);                                \
-    retflag__ = false;                                                      \
-    return retflag__;                                                       \
+    test_flag__ = false;                                                    \
+    return;                                                                 \
 }                                                                           \
 } while(false)
 
 #endif // !RAIN_UNIT_TEST
+
 

@@ -3,6 +3,6 @@
 int main()
 {
     auto &c = Rn::details::TestContainer::getInstance();
-    for (auto i : c.mTestVec)
-        i->test();
+    for (auto &i : c.mTestVec)
+        i();
 }
