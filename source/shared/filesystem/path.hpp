@@ -31,19 +31,20 @@ public:
         return !mPath.empty() && mPath.front() != '/';
     }
 
-    void append(std::string str)
+    Path & append(std::string str)
     {
         auto s = Rn::trim(std::move(str));
         if (mPath.empty())
         {
             mPath = std::move(s);
-            return;
+            return *this;
         }
 
         if (mPath[mPath.size()-1] != '/')
             mPath += '/';
         
         mPath += std::move(s);
+        return *this;
     }
 
 private:
