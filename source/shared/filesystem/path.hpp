@@ -12,7 +12,7 @@ class Path
 public:
     Path() = default;
 
-    explicit Path(std::string path)
+    explicit Path(std::string path) noexcept
         : mPath(std::move(path))
     {}
 
@@ -21,12 +21,12 @@ public:
     //Path & operator = (Path const &) = default;
     //Path & operator = (Path &&) = default;
     
-    bool absolute() const
+    bool absolute() const noexcept
     {
         return !mPath.empty() && mPath.front() == '/';
     }
 
-    bool relative() const
+    bool relative() const noexcept
     {
         return !mPath.empty() && mPath.front() != '/';
     }

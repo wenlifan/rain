@@ -9,25 +9,11 @@ namespace Rn
 class RainException : public std::exception
 {
 public:
-    RainException(
-            std::string what,
-            std::string type = "",
-            const char *filename = nullptr,
-            int linenum = -1)
-    {
-        if (type.empty())
-            type = "UnKnow";
+    RainException(std::string const &what)
+        : mWhat(what)
+    {}
 
-        mWhat = mWhat + std::move(type);
-
-        if (filename != nullptr)
-        {
-            mWhat = mWhat + ": " + filename + " (line "
-                    + std::to_string(linenum)
-                    + "): ";
-        }
-        mWhat = mWhat + std::move(what);
-    }
+    virtual ~RainException() = default;
 
     virtual const char * what() const noexcept override
     {
@@ -35,23 +21,23 @@ public:
     }
 
 private:
-    std::string mWhat;
+    std::string const &mWhat;
 };
 
-}
+} // !namespace Rn
 
-#define THROW(name, what) \
-    throw name(what, #name, __FILE__, __LINE__)
+#define THROW(name, what)                                   \
+    throw name(                                             \
+            std::string(#name) + ": " + __FILE__            \
+            + " (line " + std::to_string(__LINE__)          \
+            + "): " + what)
 
 #define DEFINE_EXCEPTION(name) \
 class name : public Rn::RainException \
 { \
 public: \
-    name(std::string what, \
-         std::string type, \
-         const char *filename, \
-         int linenum) \
-        : Rn::RainException(std::move(what), std::move(type), filename, linenum) \
+    name(std::string const &what) \
+        : Rn::RainException(what) \
     {} \
 }
 
