@@ -69,7 +69,8 @@ void testLogFail(Args && ...args)
     testLog("[ FAIL ] ", std::forward<Args>(args)...);
 }
 
-template <typename ...Args> void testSubBegin(Args && ...args) {
+template <typename ...Args>
+void testSubBegin(Args && ...args) {
     testLog("    [ TEST ] ", std::forward<Args>(args)...);
 }
 
