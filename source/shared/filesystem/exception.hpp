@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rain_exception.hpp"
+#include "exception.hpp"
 
 namespace Rn
 {

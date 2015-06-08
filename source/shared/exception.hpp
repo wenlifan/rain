@@ -6,14 +6,14 @@
 namespace Rn
 {
 
-class RainException : public std::exception
+class Exception : public std::exception
 {
 public:
-    RainException(std::string const &what)
+    Exception(std::string const &what)
         : mWhat(what)
     {}
 
-    virtual ~RainException() = default;
+    virtual ~Exception() = default;
 
     virtual const char * what() const noexcept override
     {
@@ -33,11 +33,11 @@ private:
             + "): " + what)
 
 #define DEFINE_EXCEPTION(name) \
-class name : public Rn::RainException \
+class name : public Rn::Exception \
 { \
 public: \
     name(std::string const &what) \
-        : Rn::RainException(what) \
+        : Rn::Exception(what) \
     {} \
 }
 
