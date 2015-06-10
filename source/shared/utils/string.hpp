@@ -98,5 +98,15 @@ std::vector<std::string> split(std::string const &str, T v)
     return ret;
 }
 
+std::string replace(std::string str, std::string const &from, std::string const &to)
+{
+    for (auto pos = str.find(from); pos != std::string::npos;)
+    {
+        str.replace(pos, from.length(), to);
+        pos = str.find(from, pos);
+    }
+    return str;
+}
+
 
 } // !namespace Rn
