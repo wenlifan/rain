@@ -9,31 +9,24 @@
 namespace Rn
 {
 
-inline std::size_t length(std::string const &str)
+bool startWith(std::string const &str, std::string const &v)
 {
-    return str.length();
+    return str.find(v) == 0;
 }
 
-inline std::size_t length(char)
+bool startWith(std::string const &str, char v)
 {
-    return 1;
+    return startWith(str, std::to_string(v));
 }
 
-inline std::size_t length(char const *str)
+bool endWith(std::string const &str, std::string const &v)
 {
-    return std::strlen(str);
+    return str.rfind(v) == str.length() - v.length();
 }
 
-template <typename T>
-bool startWith(std::string const &str, T const v)
+bool endWith(std::string const &str, char v)
 {
-    return str.find(v) == str.begin();
-}
-
-template <typename T>
-bool endWith(std::string const &str, T const v)
-{
-    return str.rfind(v) == str.length() - length(v);
+    return endWith(str, std::to_string(v));
 }
 
 std::string trim(std::string str)
@@ -69,8 +62,7 @@ std::string toLower(std::string str)
     return str;
 }
 
-template <typename T>
-std::vector<std::string> split(std::string const &str, T v)
+std::vector<std::string> split(std::string const &str, std::string const &v)
 {
     std::vector<std::string> ret;
 
@@ -79,14 +71,10 @@ std::vector<std::string> split(std::string const &str, T v)
 
     using stype = std::string::size_type;
     stype s = 0;
-    stype e = 0;
+    stype e = -v.length();
 
-    while ((e = str.find(v, s)) != std::string::npos)
-    {
+    while ((e += v.length(), s = e, e = str.find(v, s)) != std::string::npos)
         ret.push_back(str.substr(s, e-s));
-        e = e + length(v);
-        s = e;
-    }
 
     ret.push_back(str.substr(s, e-s));
     ret.erase(std::remove_if(
@@ -96,6 +84,11 @@ std::vector<std::string> split(std::string const &str, T v)
             ), ret.end());
 
     return ret;
+}
+
+std::vector<std::string> split(std::string const &str, char v)
+{
+    return split(str, std::to_string(v));
 }
 
 std::string replace(std::string str, std::string const &from, std::string const &to)

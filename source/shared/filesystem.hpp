@@ -32,7 +32,7 @@ public:
     //Path & operator = (Path const &) = default;
     //Path & operator = (Path &&) = default;
     
-    friend std::ostream & operator <<(std::ostream &os, Path const &p)
+    friend std::ostream & operator << (std::ostream &os, Path const &p)
     {
         os << p.mPath;
         return os;
@@ -48,7 +48,7 @@ public:
         return !mPath.empty() && mPath.front() != '/';
     }
 
-    bool root() const
+    bool isRoot() const
     {
         return mPath == "/";
     }
@@ -73,8 +73,6 @@ public:
             pos = mPath.find("/../", s);
         }
         
-        std::cout << "###: " << mPath << std::endl;
-
         if (endWith(mPath, "/.."))
         {
             auto p = mPath.rfind('/', mPath.length()-4);
@@ -138,7 +136,7 @@ public:
 
     Path & parent()
     {
-        if (root())
+        if (isRoot())
             return *this;
 
         if (mPath.back() == '/')
