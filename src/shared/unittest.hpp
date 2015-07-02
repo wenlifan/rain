@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef RAIN_UNIT_TEST
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -8,7 +8,7 @@
 #include <functional>
 #include <exception>
 
-#include "../rain_exception.hpp"
+#include "exception.hpp"
 
 namespace Rn
 {
@@ -180,6 +180,5 @@ if (!(bool_expr))                                                           \
 }                                                                           \
 } while(false)
 
-#endif // !RAIN_UNIT_TEST
 
 

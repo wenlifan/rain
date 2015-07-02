@@ -1,10 +1,6 @@
 #define RAIN_UNIT_TEST
 
 #include "unittest.hpp"
-//#include "../rain_exception.hpp"
-
-#include <stdexcept>
-
 
 TEST_BEGIN(test1_main)
     TEST(Hello)
