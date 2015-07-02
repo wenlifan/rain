@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.0)
+
+add_subdirectory(AccountServer)
+add_subdirectory(DataServer)
+add_subdirectory(GameServer)
+add_subdirectory(GateWay)
+add_subdirectory(HostServer)
+add_subdirectory(LoginServer)
+add_subdirectory(ManageConsole)
+add_subdirectory(ManageServer)
+add_subdirectory(SharedServer)
