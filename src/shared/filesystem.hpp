@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "utils.hpp"
+#include "strutils.hpp"
 #include "exception.hpp"
 
 extern "C"

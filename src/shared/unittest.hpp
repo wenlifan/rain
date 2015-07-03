@@ -50,11 +50,12 @@ void testLog(Args && ...args)
 template <typename ...Args>
 void testLogParams(Args && ...args)
 {
+
     if (sizeof...(args) == 0)
         return;
 
     std::cout << "Params: { ";
-    (void)std::initializer_list<int>{(std::cout << args << ' ', 0)...};
+    testLog(std::forward<Args>(args)...);
     std::cout << "}";
 }
 
