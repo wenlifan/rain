@@ -1,10 +1,9 @@
-#define RAIN_UNIT_TEST
-
 #include "unittest.hpp"
 
 TEST_BEGIN(test1_main)
     TEST(Hello)
     {
+        EXPECTED(1==2, "lalala");
         REQUIRED(1==2, "why");
     }
     TEST(World)
@@ -18,7 +17,7 @@ TEST_END
 
 int main()
 {
-    auto &c = Rn::details::TestContainer::getInstance();
+    auto &c = rain::details_test::TestContainer::getInstance();
     for (auto &i : c.getTests())
         i();
 }

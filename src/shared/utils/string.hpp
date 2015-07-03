@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace Rn
+namespace rain
 {
 
 bool startWith(std::string const &str, std::string const &v)

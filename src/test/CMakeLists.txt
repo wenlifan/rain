@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 
-include_directories(../shared)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(SHARED_DIR ../shared)
+include_directories(${SHARED_DIR})
 
-set(CMAKE_CXX_FLAGS "-std=c++14")
-
-set(SOURCE_FILES ../shared/unittest.cpp)
-set(HEADER_FILES  )
+set(HEADER_FILES ${SHARED_DIR}/unittest.hpp)
+file(GLOB_RECURSE SOURCE_FILES ${SHARED_DIR}/*_test.cpp)
 
 add_executable(TestAll ${SOURCE_FILES} ${HEADER_FILES})

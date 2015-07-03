@@ -3,7 +3,7 @@
 #include <string>
 #include <exception>
 
-namespace Rn
+namespace rain
 {
 
 class Exception : public std::exception
@@ -24,7 +24,7 @@ private:
     std::string const &mWhat;
 };
 
-} // !namespace Rn
+} // !namespace rain
 
 #define THROW(name, what)                                   \
     throw name(                                             \
@@ -33,11 +33,11 @@ private:
             + "): " + what)
 
 #define DEFINE_EXCEPTION(name) \
-class name : public Rn::Exception \
+class name : public rain::Exception \
 { \
 public: \
     name(std::string const &what) \
-        : Rn::Exception(what) \
+        : rain::Exception(what) \
     {} \
 }
 

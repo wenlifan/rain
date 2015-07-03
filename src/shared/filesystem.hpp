@@ -15,7 +15,7 @@ extern "C"
 #include <dirent.h>
 }
 
-namespace Rn
+namespace rain
 {
 
 class Path
@@ -24,7 +24,7 @@ public:
     Path() = default;
 
     explicit Path(std::string path)
-        : mPath(std::move(path))
+        : path_(std::move(path))
     {}
 
     //Path(Path const &) = default;
@@ -34,49 +34,49 @@ public:
     
     friend std::ostream & operator << (std::ostream &os, Path const &p)
     {
-        os << p.mPath;
+        os << p.path_;
         return os;
     }
     
     bool isAbsolute() const
     {
-        return !mPath.empty() && mPath.front() == '/';
+        return !path_.empty() && path_.front() == '/';
     }
 
     bool isRelative() const
     {
-        return !mPath.empty() && mPath.front() != '/';
+        return !path_.empty() && path_.front() != '/';
     }
 
     bool isRoot() const
     {
-        return mPath == "/";
+        return path_ == "/";
     }
 
     Path & tidy()
     {
-        mPath = replace(mPath, "/./", "/");
-        if (!endWith(mPath, "/..") && mPath.back() == '.')
-            mPath.pop_back();
+        path_ = replace(path_, "/./", "/");
+        if (!endWith(path_, "/..") && path_.back() == '.')
+            path_.pop_back();
         
-        auto pos = mPath.find("/../");
+        auto pos = path_.find("/../");
         while (pos != std::string::npos)
         {
             while (pos == 0)
             {
-                mPath.erase(0, 3);
-                pos = mPath.find("/../");
+                path_.erase(0, 3);
+                pos = path_.find("/../");
             }
 
-            auto s = mPath.rfind('/', pos-1);
-            mPath.erase(s, pos+3-s);
-            pos = mPath.find("/../", s);
+            auto s = path_.rfind('/', pos-1);
+            path_.erase(s, pos+3-s);
+            pos = path_.find("/../", s);
         }
         
-        if (endWith(mPath, "/.."))
+        if (endWith(path_, "/.."))
         {
-            auto p = mPath.rfind('/', mPath.length()-4);
-            mPath.resize(p);
+            auto p = path_.rfind('/', path_.length()-4);
+            path_.resize(p);
         }
 
         return *this;
@@ -85,14 +85,14 @@ public:
     Path & absolute()
     {
         assert(isRelative());
-        *this = Path().current().append(mPath);
+        *this = Path().current().append(path_);
 
         return *this;
     }
 
     Path getAbsolute() const
     {
-        return Path(mPath).absolute();
+        return Path(path_).absolute();
     }
 
     Path & current()
@@ -100,7 +100,7 @@ public:
         char arr[PATH_MAX];
         assert(getcwd(arr, PATH_MAX));
 
-        mPath = arr;
+        path_ = arr;
         return *this;
     }
 
@@ -111,27 +111,27 @@ public:
 
     Path & append(std::string str)
     {
-        auto s = Rn::trim(std::move(str));
-        if (mPath.empty())
+        auto s = rain::trim(std::move(str));
+        if (path_.empty())
         {
-            mPath = std::move(s);
+            path_ = std::move(s);
             return *this;
         }
 
-        if (mPath.back() != '/')
-            mPath += '/';
+        if (path_.back() != '/')
+            path_ += '/';
         
-        mPath += std::move(s);
+        path_ += std::move(s);
 
-        if (mPath.length() == 1 && mPath.front() == '/')
-            mPath.pop_back();
+        if (path_.length() == 1 && path_.front() == '/')
+            path_.pop_back();
 
         return *this;
     }
 
     Path getAppend(std::string str) const
     {
-        return Path(mPath).append(std::move(str));
+        return Path(path_).append(std::move(str));
     }
 
     Path & parent()
@@ -139,10 +139,10 @@ public:
         if (isRoot())
             return *this;
 
-        if (mPath.back() == '/')
-            mPath.pop_back();
+        if (path_.back() == '/')
+            path_.pop_back();
 
-        auto pos = mPath.rfind('/');
+        auto pos = path_.rfind('/');
 
         if (pos == std::string::npos)
             return *this;
@@ -150,27 +150,27 @@ public:
         if (pos == 0)
             pos++;
 
-        mPath.erase(pos, mPath.size()-pos);
+        path_.erase(pos, path_.size()-pos);
 
         return *this;
     }
 
     Path getParent() const
     {
-        return Path(mPath).parent();
+        return Path(path_).parent();
     }
 
     bool exists() const
     {
-        if (access(mPath.c_str(), F_OK))
+        if (access(path_.c_str(), F_OK))
             return false;
 
         return true;
     }
 
 private:
-    std::string mPath;
+    std::string path_;
 };
 
-} // !namespace Rn
+} // !namespace rain
 

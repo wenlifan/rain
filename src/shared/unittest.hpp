@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -10,10 +8,10 @@
 
 #include "exception.hpp"
 
-namespace Rn
+namespace rain
 {
 
-namespace details
+namespace details_test
 {
 
 class TestContainer
@@ -96,13 +94,13 @@ void testSubFail(Args && ...args)
     testLog("    [ FAIL ] ", std::forward<Args>(args)...);
 }
 
-} // !namespace details
+} // !namespace details_test
 
-} // !namespace Rn
+} // !namespace rain
 
 
 #define TEST_LOG(...)                                                       \
-    Rn::details::testLog("        > ", __VA_ARGS__)
+    rain::details_test::testLog("        > ", __VA_ARGS__)
 
 
 #define TEST_BEGIN(name)                                                    \
@@ -117,36 +115,36 @@ auto test_func_##name##__ = [] {                                            \
 
 #define TEST_END                                                            \
         ));                                                                 \
-        Rn::details::testLogBegin(                                          \
+        rain::details_test::testLogBegin(                                   \
                 test_name, " -- total: ", tests.size(), " --\n");           \
         for (auto &i : tests) {                                             \
-            Rn::details::testSubBegin(i.first);                             \
+            rain::details_test::testSubBegin(i.first);                      \
             test_flag__ = true;                                             \
             try {                                                           \
                 i.second();                                                 \
             }                                                               \
             catch (std::exception &e) {                                     \
-                Rn::details::testLog('\n');                                 \
+                rain::details_test::testLog('\n');                          \
                 TEST_LOG(e.what());                                         \
                 test_flag__ = false;                                        \
             }                                                               \
             if (test_flag__)                                                \
-                Rn::details::testSubOK('\n');                               \
+                rain::details_test::testSubOK('\n');                        \
             else                                                            \
             {                                                               \
                 fail_count++ ;                                              \
-                Rn::details::testLog('\n');                                 \
-                Rn::details::testSubFail('\n');                             \
+                rain::details_test::testLog('\n');                          \
+                rain::details_test::testSubFail('\n');                      \
             }                                                               \
         }                                                                   \
         if (fail_count > 0) {                                               \
-            Rn::details::testLogFail(                                       \
+            rain::details_test::testLogFail(                                \
                     " -- failed: ", fail_count, " --\n");                   \
         }                                                                   \
         else                                                                \
-            Rn::details::testLogOK('\n');                                   \
+            rain::details_test::testLogOK('\n');                            \
     };                                                                      \
-    Rn::details::TestContainer::getInstance().addTest(main_test);         \
+    rain::details_test::TestContainer::getInstance().addTest(main_test);    \
     return 0;                                                               \
 }();
 
@@ -160,9 +158,9 @@ auto test_func_##name##__ = [] {                                            \
 do {                                                                        \
 if (!(bool_expr))                                                           \
 {                                                                           \
-    Rn::details::testLog('\n');                                             \
+    rain::details_test::testLog('\n');                                      \
     TEST_LOG(__FILE__, " (line ", __LINE__, "): ", "Expected Fail -- ");    \
-    Rn::details::testLogParams(__VA_ARGS__);                                \
+    rain::details_test::testLogParams(__VA_ARGS__);                         \
     test_flag__ = false;                                                    \
 }                                                                           \
 } while(false)
@@ -172,9 +170,9 @@ if (!(bool_expr))                                                           \
 do {                                                                        \
 if (!(bool_expr))                                                           \
 {                                                                           \
-    Rn::details::testLog('\n');                                             \
+    rain::details_test::testLog('\n');                                      \
     TEST_LOG(__FILE__, " (line ", __LINE__, "): ", "Required Fail -- ");    \
-    Rn::details::testLogParams(__VA_ARGS__);                                \
+    rain::details_test::testLogParams(__VA_ARGS__);                         \
     test_flag__ = false;                                                    \
     return;                                                                 \
 }                                                                           \
