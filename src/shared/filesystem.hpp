@@ -1,176 +1,58 @@
 #pragma once
 
 #include <string>
-#include <iostream>
-#include <cassert>
-
-#include "strutils.hpp"
-#include "exception.hpp"
+#include <vector>
+#include <functional>
+#include <algorithm>
 
 extern "C"
-{ 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+{
 #include <dirent.h>
+#include <unistd.h>
 }
 
 namespace rain
 {
 
-class Path
+bool resetWorkDir(std::string const &cmd)
 {
-public:
-    Path() = default;
+    char buf[PATH_MAX] = {};
+    getcwd(buf, PATH_MAX);
 
-    explicit Path(std::string path)
-        : path_(std::move(path))
-    {}
+    auto wd = std::string(buf);
+    auto pos = cmd.rfind('/');
 
-    //Path(Path const &) = default;
-    //Path(Path &&) = default;
-    //Path & operator = (Path const &) = default;
-    //Path & operator = (Path &&) = default;
-    
-    friend std::ostream & operator << (std::ostream &os, Path const &p)
-    {
-        os << p.path_;
-        return os;
-    }
-    
-    bool isAbsolute() const
-    {
-        return !path_.empty() && path_.front() == '/';
-    }
+    if (pos != std::string::npos)
+        wd += '/' + cmd.substr(0, pos);
+    return !(chdir(wd.c_str()));
+}
 
-    bool isRelative() const
-    {
-        return !path_.empty() && path_.front() != '/';
-    }
+std::vector<std::string> getSortedDirFiles(std::string const &path)
+{
+    using F = std::function<void(std::vector<std::string>&, std::string const &)>;
 
-    bool isRoot() const
-    {
-        return path_ == "/";
-    }
-
-    Path & tidy()
-    {
-        path_ = replace(path_, "/./", "/");
-        if (!endWith(path_, "/..") && path_.back() == '.')
-            path_.pop_back();
-        
-        auto pos = path_.find("/../");
-        while (pos != std::string::npos)
+    std::vector<std::string> vs;
+    F f = [&](auto &vec, auto const &dir) {
+        auto dirp = opendir(dir.c_str());
+        struct dirent *dp;
+        while ((dp = readdir(dirp)) != nullptr)
         {
-            while (pos == 0)
-            {
-                path_.erase(0, 3);
-                pos = path_.find("/../");
-            }
+            std::string name = dp->d_name;
+            if (name == "." || name == "..")
+                continue;
 
-            auto s = path_.rfind('/', pos-1);
-            path_.erase(s, pos+3-s);
-            pos = path_.find("/../", s);
+            if (dp->d_type == DT_DIR)
+                f(vec, dir + '/' + name);
+            else if (dp->d_type == DT_REG)
+                vec.push_back(dir + '/' + name);
         }
-        
-        if (endWith(path_, "/.."))
-        {
-            auto p = path_.rfind('/', path_.length()-4);
-            path_.resize(p);
-        }
+        closedir(dirp);
+    };
 
-        return *this;
-    }
-
-    Path & absolute()
-    {
-        assert(isRelative());
-        *this = Path().current().append(path_);
-
-        return *this;
-    }
-
-    Path getAbsolute() const
-    {
-        return Path(path_).absolute();
-    }
-
-    Path & current()
-    {
-        char arr[PATH_MAX];
-        assert(getcwd(arr, PATH_MAX));
-
-        path_ = arr;
-        return *this;
-    }
-
-    Path getCurrent() const
-    {
-        return Path().current();
-    }
-
-    Path & append(std::string str)
-    {
-        auto s = rain::trim(std::move(str));
-        if (path_.empty())
-        {
-            path_ = std::move(s);
-            return *this;
-        }
-
-        if (path_.back() != '/')
-            path_ += '/';
-        
-        path_ += std::move(s);
-
-        if (path_.length() == 1 && path_.front() == '/')
-            path_.pop_back();
-
-        return *this;
-    }
-
-    Path getAppend(std::string str) const
-    {
-        return Path(path_).append(std::move(str));
-    }
-
-    Path & parent()
-    {
-        if (isRoot())
-            return *this;
-
-        if (path_.back() == '/')
-            path_.pop_back();
-
-        auto pos = path_.rfind('/');
-
-        if (pos == std::string::npos)
-            return *this;
-
-        if (pos == 0)
-            pos++;
-
-        path_.erase(pos, path_.size()-pos);
-
-        return *this;
-    }
-
-    Path getParent() const
-    {
-        return Path(path_).parent();
-    }
-
-    bool exists() const
-    {
-        if (access(path_.c_str(), F_OK))
-            return false;
-
-        return true;
-    }
-
-private:
-    std::string path_;
-};
+    f(vs, path);
+    std::sort(vs.begin(), vs.end());
+    return vs;
+}
 
 } // !namespace rain
 
