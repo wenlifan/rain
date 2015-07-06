@@ -1,8 +1,10 @@
 #include <iostream>
 #include <chrono>
 
-#include "asio.hpp"
 #include "filesystem.hpp"
+
+#include "server_node.hpp"
+#include "base_session.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -12,5 +14,13 @@ int main(int argc, char *argv[])
     for (auto &v : vec)
         std::cout << v << std::endl;
 
-    std::cout << "Hello, World!\n";
+    auto server = rain::ServerNode<rain::BaseSession>(9997);
+    server.start();
+
+    for(;;)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    }
+
+    std::cout << "End!\n";
 }

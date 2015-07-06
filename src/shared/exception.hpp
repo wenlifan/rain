@@ -10,18 +10,18 @@ class Exception : public std::exception
 {
 public:
     Exception(std::string const &what)
-        : mWhat(what)
+        : what_(what)
     {}
 
     virtual ~Exception() = default;
 
     virtual const char * what() const noexcept override
     {
-        return mWhat.c_str();
+        return what_.c_str();
     }
 
 private:
-    std::string const &mWhat;
+    std::string const &what_;
 };
 
 } // !namespace rain
