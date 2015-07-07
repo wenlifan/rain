@@ -5,11 +5,11 @@
 #include "asio.hpp"
 
 #include "client_node.hpp"
-#include "base_session.hpp"
+#include "session.hpp"
 
 int main(void)
 {
-    auto client = rain::ClientNode<rain::BaseSession>();
+    auto client = rain::ClientNode<rain::Session>();
 
     for (;;)
     {

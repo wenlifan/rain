@@ -4,7 +4,7 @@
 #include "filesystem.hpp"
 
 #include "server_node.hpp"
-#include "base_session.hpp"
+#include "session.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     for (auto &v : vec)
         std::cout << v << std::endl;
 
-    auto server = rain::ServerNode<rain::BaseSession>(9997);
+    auto server = rain::ServerNode<rain::Session>(9997);
     server.start();
 
     for(;;)

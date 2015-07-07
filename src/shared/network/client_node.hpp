@@ -18,9 +18,9 @@ class ClientNode
     using IOServicePtr = std::shared_ptr<IOService>;
 
 public:
-    ClientNode() :
-            iosp_(std::make_shared<IOService>()),
-            trivial_work_(*iosp_)
+    ClientNode()
+            : iosp_(std::make_shared<IOService>())
+            , trivial_work_(*iosp_)
     {
         start();
     }

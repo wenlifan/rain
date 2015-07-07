@@ -56,7 +56,7 @@ void testLogParams(Args && ...args)
 
     std::cout << "Params: { ";
     testLog(std::forward<Args>(args)...);
-    std::cout << "}";
+    std::cout << " }";
 }
 
 template <typename ...Args>
