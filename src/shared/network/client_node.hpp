@@ -39,10 +39,10 @@ public:
         session->getSocket().async_connect(ep, [session](std::error_code const &err) {
             if (!err)
             {
-                // TODO session process
-
-                std::cout << "Connected!" << std::endl;
+                session->start();
             }
+
+            std::cout << "connect err: " << err.message() << std::endl;
         });
     }
 

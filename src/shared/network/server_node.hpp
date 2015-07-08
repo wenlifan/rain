@@ -26,6 +26,7 @@ public:
             acceptor_(*iosp_, tcp::endpoint(tcp::v4(), port))
     {
         auto n = std::thread::hardware_concurrency();
+        std::cout << "Threads: " << n << std::endl;
         work_threads_.resize(n > 0 ? n : 2);
         accept();
     }
@@ -55,14 +56,15 @@ public:
 private:
     void accept()
     {
+        std::cout << "Listen to " << acceptor_.local_endpoint() << std::endl;
         auto session = std::make_shared<Session>(iosp_);
         acceptor_.async_accept(session->getSocket(), [this, session](std::error_code const &err) {
             if (!err) {
-                // TODO process session
-                std::cout << "hello, world!" << std::endl;
+                session->start();
 
                 accept();
             }
+            std::cout << "accept err: " << err.message() << std::endl;
         });
     }
 

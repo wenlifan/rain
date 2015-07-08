@@ -14,8 +14,11 @@ namespace rain
 class MessagePack
 {
 public:
+    enum { HeaderSize = 6 };
+
+public:
     MessagePack(Protocol proto, std::size_t init_size = 0)
-            : data_(init_size + 6)
+            : data_(init_size + HeaderSize)
     {
         auto s = std::uint32_t(0);
         std::memcpy(data_.data(), &s, 4);
@@ -70,7 +73,7 @@ public:
         data_.resize(data_.size() + size);
         std::memcpy(data_.data() + data_.size() - size, data, size);
 
-        auto s = std::uint32_t(data_.size() - 6);
+        auto s = std::uint32_t(data_.size() - HeaderSize);
         std::memcpy(data_.data(), &s, 4);
     }
 

@@ -1,10 +1,12 @@
 #include <iostream>
 #include <chrono>
+#include <iostream>
 
 #include "filesystem.hpp"
 
 #include "server_node.hpp"
 #include "session.hpp"
+#include "server_session_manager.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -14,13 +16,18 @@ int main(int argc, char *argv[])
     for (auto &v : vec)
         std::cout << v << std::endl;
 
-    auto server = rain::ServerNode<rain::Session>(9997);
-    server.start();
-
-    for(;;)
+    try
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        auto server = rain::ServerNode<rain::Session<rain::ServerSessionManager>>(5000);
+        server.start();
+        std::cout << "Server Started!" << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(9999999));
+    }
+    catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
     }
 
-    std::cout << "End!\n";
+    //std::cout << "End!\n";
 }
