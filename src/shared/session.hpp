@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <array>
 #include <cstring>
+#include <atomic>
 
 #include "asio.hpp"
 
@@ -166,7 +167,7 @@ private:
     std::array<char, 4096> read_buf_;
     std::size_t ping_interval_; // ms
     std::size_t remove_times_;
-    std::size_t ping_times_ = 0;
+    std::atomic_size_t ping_times_{0};
 };
 
 } // !namespace rain
