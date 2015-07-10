@@ -16,7 +16,7 @@ protected:
     Singleton & operator = (Singleton &&) = delete;
 
 public:
-    static T & getInstance()
+    static T & get_instance()
     {
         static T t;
         return t;

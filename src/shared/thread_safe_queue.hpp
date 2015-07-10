@@ -29,7 +29,7 @@ public:
         return ptr;
     }
 
-    std::list<T> popAll()
+    std::list<T> pop_all()
     {
         std::lock_guard<std::mutex> guard(mutex_);
         if (lists_.empty())

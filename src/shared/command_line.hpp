@@ -1,10 +1,19 @@
 #pragma once
 
-#include <vector>
-#include <mutex>
 #include <iostream>
-#include <atomic>
-#include <chrono>
+#include <string>
+#include <mutex>
+#include <vector>
+#include <list>
+#include <cstdio>
+#include <cctype>
+#include <array>
+
+extern "C"
+{
+#include <termios.h>
+#include <unistd.h>
+}
 
 #include "singleton.hpp"
 #include "thread_safe_queue.hpp"
@@ -29,101 +38,244 @@ class CommandLine : public Singleton<CommandLine>
 {
     friend Singleton<CommandLine>;
 
-    enum { ReadBufferSize = 128 };
+    enum
+    {
+        ReadBufferSize = 32,
+        HistoryCount = 100,
+    };
 
 private:
     CommandLine()
-        : read_buf_(ReadBufferSize)
     {
-        std::cout.sync_with_stdio(false);
-        std::cin.sync_with_stdio(false);
-        read_thread_ = std::thread([this]{
-            std::size_t idx = 0;
-            while (!close_read_)
-            {
-                auto lala = commands_.popAll();
-                for (auto &i:lala)
-                    write(i);
-                write("Hehe from commandline read thread!", CommandLineColor::Magenta);
-//                std::string a;
-//                std::cin >> a;
-//                write(a, CommandLineColor::Blue);
+        history_iter_ = history_.end();
 
-                auto rs = std::cin.readsome(read_buf_.data() + idx, read_buf_.size() - idx);
-                if (rs > 0)
-                {
-                    auto find_lb = [this] (std::size_t pos) {
-                        while (pos < read_buf_.size() && read_buf_[pos] != '\n')
-                            ++pos;
-                        return pos;
-                    };
-                    auto iter = find_lb(idx);
-                    std::size_t last_lb_iter = 0;
-                    while (iter != read_buf_.size())
-                    {
-                        commands_.push(std::string(read_buf_.data() + iter, iter));
-                        last_lb_iter = iter;
-                        iter = find_lb(iter);
-                    }
-                    auto cpn = idx + rs - last_lb_iter;
-                    if (cpn >= read_buf_.size())
-                    {
-                        idx = 0;
-                    }
-                    else if (cpn > 0)
-                    {
-                        for (auto i = cpn; i > 0; --i)
-                            read_buf_[cpn-i] = read_buf_[last_lb_iter+cpn-i];
-                        idx = cpn;
-                    }
-                    else
-                    {
-                        idx += rs;
-                    }
-                }
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            }
-        });
+        set_term();
+        set_status();
     }
 
     ~CommandLine()
     {
-        close_read_ = true;
-        read_thread_.join();
+        reset_term();
     }
-
 public:
-    void write(std::string const &str,
+
+    void write_line(std::string const &str,
                CommandLineColor fore = CommandLineColor::None,
                CommandLineColor back = CommandLineColor::None,
                bool bold = true)
     {
-        std::lock_guard<std::mutex> guard(write_mutex_);
-
-        std::cout << "\x1b[";
+        write_mutex_.lock();
+        std::printf("\x1b[");
 
         if (fore != CommandLineColor::None)
-            std::cout << "3" << std::to_string(fore);
+            std::printf("3%d", fore);
 
         if (back != CommandLineColor::None)
-            std::cout << ";4" << std::to_string(back);
+            std::printf(";4%d",back);
 
         if (bold)
-            std::cout << ";1";
+            std::printf(";1");
 
-        std::cout << "m" << str << "\x1b[m" << std::endl;
+        std::printf("m%s\x1b[m\r\n", str.c_str());
+        write_mutex_.unlock();
+
+        flush_status_line();
+    }
+
+    void set_status(float load = 0.0)
+    {
+        char buf[128] = {};
+        std::sprintf(buf, "LOAD: %6.2f%% > ", load);
+        std::lock_guard<std::mutex> guard(status_mutex_);
+        status_ = buf;
+    }
+
+    void run()
+    {
+        flush_status_line();
+        for (;;)
+        {
+            auto n = read(0, read_buf_.data(), read_buf_.size());
+            if (n == 1)
+            {
+                auto c = read_buf_[0];
+                if (c == 10)
+                {
+                    if (push_command())
+                        break;
+                }
+                else if (c == 127)
+                    back_delete();
+                else if (std::isprint(c))
+                    input_char(c);
+            }
+            else if (n == 3)
+            {
+                auto c = read_buf_[2];
+                if (c == 65)
+                    prev_history();
+                else if (c == 66)
+                    next_history();
+                else if (c == 67)
+                    move_right();
+                else if (c == 68)
+                    move_left();
+            }
+        }
+        auto cmds = commands_.pop_all();
+        for (auto &i : cmds)
+            write_line(i, CommandLineColor::Magenta);
+    }
+
+private:
+    void set_term()
+    {
+        tcgetattr(0, &term_tmp_);
+        termios term = term_tmp_;
+        term.c_lflag &= (~(ICANON | ECHO | ISIG));
+        term.c_cc[VTIME] = 0;
+        term.c_cc[VMIN] = 1;
+        tcsetattr(0, TCSANOW, &term);
+    }
+
+    void reset_term()
+    {
+        tcsetattr(0, TCSANOW, &term_tmp_);
+    }
+
+    void move_left()
+    {
+        if (cursor_pos_ == 0)
+            return;
+
+        cursor_pos_--;
+        std::lock_guard<std::mutex> guard(write_mutex_);
+        std::printf("\x1b[1D");
+        std::fflush(stdout);
+    }
+
+    void move_right()
+    {
+        if (cursor_pos_ >= current_buf_.size())
+            return;
+
+        cursor_pos_++;
+        std::lock_guard<std::mutex> guard(write_mutex_);
+        std::printf("\x1b[1C");
+        std::fflush(stdout);
+    }
+
+    void clear_screen()
+    {
+        cursor_pos_ = 0;
+        std::lock_guard<std::mutex> guard(write_mutex_);
+        std::printf("\x1b[2J\x1b[0;%ldH", status_.size());
+        std::fflush(stdout);
+    }
+
+    void flush_status_line()
+    {
+        std::lock_guard<std::mutex> guard(write_mutex_);
+        std::lock_guard<std::mutex> guard_status(status_mutex_);
+        std::printf("\r%s%s\x1b[K", status_.c_str(), current_buf_.c_str());
+        std::fflush(stdout);
+        std::printf("\r\x1b[%ldC", status_.size() + cursor_pos_);
+        std::fflush(stdout);
+    }
+
+    bool push_command()
+    {
+        write_mutex_.lock();
+        std::printf("\r\n");
+        write_mutex_.unlock();
+
+        if (current_buf_.empty())
+        {
+            flush_status_line();
+            return false;
+        }
+
+        if (history_.empty() || history_.back() != current_buf_)
+            history_.push_back(std::move(current_buf_));
+        else
+            current_buf_.clear();
+
+        if (history_.size() > HistoryCount)
+            history_.pop_front();
+
+        cursor_pos_ = 0;
+
+        if (history_.back() == "quit")
+        {
+            flush_status_line();
+            return true;
+        }
+
+        commands_.push(history_.back());
+        flush_status_line();
+        return false;
+    }
+
+    void prev_history()
+    {
+        while (history_iter_ != history_.begin() && current_buf_ == *--history_iter_);
+
+        if (current_buf_ == *history_iter_)
+            return;
+
+        current_buf_ = *history_iter_;
+        cursor_pos_ = current_buf_.size();
+
+        flush_status_line();
+    }
+
+    void next_history()
+    {
+        while (history_iter_ != history_.end() && current_buf_ == *history_iter_)
+            ++history_iter_;
+
+        if (history_iter_ == history_.end())
+            current_buf_.clear();
+        else
+            current_buf_ = *history_iter_;
+
+        cursor_pos_ = current_buf_.size();
+
+        flush_status_line();
+    }
+
+    void back_delete()
+    {
+        if (cursor_pos_ != 0)
+            current_buf_.erase(--cursor_pos_, 1);
+
+        flush_status_line();
+    }
+
+    void input_char(char c)
+    {
+        current_buf_.insert(cursor_pos_++, &c, 1);
+
+        flush_status_line();
     }
 
 
-
-
 private:
+    termios term_tmp_;
+
+    std::array<char, ReadBufferSize> read_buf_;
+
+    std::list<std::string> history_;
+    std::list<std::string>::iterator history_iter_;
+
+    std::string status_;
+    std::mutex status_mutex_;
+
+    std::string current_buf_;
+    std::size_t cursor_pos_{0};
+
     ThreadSafeQueue<std::string> commands_;
     std::mutex write_mutex_;
-    std::vector<char> read_buf_;
-    std::thread read_thread_;
-    std::atomic_bool close_read_;
 };
 
 } // !namespace rain
