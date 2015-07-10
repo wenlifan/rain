@@ -3,11 +3,14 @@
 #include <iostream>
 #include <string>
 #include <mutex>
-#include <vector>
 #include <list>
 #include <cstdio>
 #include <cctype>
 #include <array>
+#include <ctime>
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 extern "C"
 {
@@ -51,11 +54,23 @@ private:
 
         set_term();
         set_status();
+        reset_time();
+
+        time_thread_ = std::thread([this] {
+            while (!exit_time_thread_)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                reset_time();
+                flush_status_line();
+            }
+        });
     }
 
     ~CommandLine()
     {
         reset_term();
+        exit_time_thread_ = true;
+        time_thread_.join();
     }
 public:
 
@@ -65,6 +80,11 @@ public:
                bool bold = true)
     {
         write_mutex_.lock();
+        std::printf("\r\x1b[K");
+        std::fflush(stdout);
+        time_mutex_.lock();
+        std::printf("%s ", time_.c_str());
+        time_mutex_.unlock();
         std::printf("\x1b[");
 
         if (fore != CommandLineColor::None)
@@ -84,8 +104,8 @@ public:
 
     void set_status(float load = 0.0)
     {
-        char buf[128] = {};
-        std::sprintf(buf, "LOAD: %6.2f%% > ", load);
+        char buf[32] = {};
+        std::sprintf(buf, " %5.2f%% > ", load);
         std::lock_guard<std::mutex> guard(status_mutex_);
         status_ = buf;
     }
@@ -122,9 +142,9 @@ public:
                     move_left();
             }
         }
-        auto cmds = commands_.pop_all();
-        for (auto &i : cmds)
-            write_line(i, CommandLineColor::Magenta);
+//        auto cmds = commands_.pop_all();
+//        for (auto &i : cmds)
+//            write_line(i, CommandLineColor::Magenta);
     }
 
 private:
@@ -167,9 +187,8 @@ private:
 
     void clear_screen()
     {
-        cursor_pos_ = 0;
         std::lock_guard<std::mutex> guard(write_mutex_);
-        std::printf("\x1b[2J\x1b[0;%ldH", status_.size());
+        std::printf("\x1b[2J\x1b[H");
         std::fflush(stdout);
     }
 
@@ -177,9 +196,10 @@ private:
     {
         std::lock_guard<std::mutex> guard(write_mutex_);
         std::lock_guard<std::mutex> guard_status(status_mutex_);
-        std::printf("\r%s%s\x1b[K", status_.c_str(), current_buf_.c_str());
+        std::lock_guard<std::mutex> guard_time(time_mutex_);
+        std::printf("\r%s%s%s\x1b[K", time_.c_str(), status_.c_str(), current_buf_.c_str());
         std::fflush(stdout);
-        std::printf("\r\x1b[%ldC", status_.size() + cursor_pos_);
+        std::printf("\r\x1b[%ldC", time_.size() + status_.size() + cursor_pos_);
         std::fflush(stdout);
     }
 
@@ -204,14 +224,22 @@ private:
             history_.pop_front();
 
         cursor_pos_ = 0;
+        history_iter_ = history_.end();
 
         if (history_.back() == "quit")
         {
             flush_status_line();
             return true;
         }
+        else if (history_.back() == "clear")
+        {
+            clear_screen();
+            flush_status_line();
+            return false;
+        }
 
         commands_.push(history_.back());
+
         flush_status_line();
         return false;
     }
@@ -259,6 +287,23 @@ private:
         flush_status_line();
     }
 
+    void reset_time()
+    {
+        char buf[32] = {};
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        std::sprintf(buf,
+                     "%04d-%02d-%02d %02d:%02d:%02d",
+                     tm.tm_year + 1900,
+                     tm.tm_mon,
+                     tm.tm_mday,
+                     tm.tm_hour,
+                     tm.tm_min,
+                     tm.tm_sec);
+        std::lock_guard<std::mutex> guard(time_mutex_);
+        time_ = buf;
+    }
+
 
 private:
     termios term_tmp_;
@@ -271,6 +316,12 @@ private:
     std::string status_;
     std::mutex status_mutex_;
 
+    std::string time_;
+    std::mutex time_mutex_;
+
+    std::thread time_thread_;
+    std::atomic_bool exit_time_thread_{false};
+
     std::string current_buf_;
     std::size_t cursor_pos_{0};
 
@@ -279,3 +330,15 @@ private:
 };
 
 } // !namespace rain
+
+#define RAIN_DEBUG(str) \
+    rain::CommandLine::get_instance().write_line \
+    (std::string("[ DEBUG ] ") + str, rain::CommandLineColor::Cyan)
+
+#define RAIN_WARN(str) \
+    rain::CommandLine::get_instance().write_line \
+    (std::string("[ WARN  ] ") + str, rain::CommandLineColor::Brown)
+
+#define RAIN_ERROR(str) \
+    rain::CommandLine::get_instance().write_line \
+    (std::string("[ ERROR ] ") + str, rain::CommandLineColor::Red)
