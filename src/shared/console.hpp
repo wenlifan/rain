@@ -11,6 +11,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <utility>
 
 extern "C"
 {
@@ -24,7 +25,7 @@ extern "C"
 namespace rain
 {
 
-enum CommandLineColor : char
+enum class ConsoleColor : char
 {
     Black   = 0,
     Red     = 1,
@@ -37,9 +38,20 @@ enum CommandLineColor : char
     None    = 8,
 };
 
-class CommandLine : public Singleton<CommandLine>
+enum class ConsoleKey : char
 {
-    friend Singleton<CommandLine>;
+    Printable,
+    Return,
+    Backspace,
+    Left,
+    Right,
+    Up,
+    Down,
+};
+
+class Console : public Singleton<Console>
+{
+    friend Singleton<Console>;
 
     enum
     {
@@ -48,7 +60,7 @@ class CommandLine : public Singleton<CommandLine>
     };
 
 private:
-    CommandLine()
+    Console()
     {
         history_iter_ = history_.end();
 
@@ -66,7 +78,7 @@ private:
         });
     }
 
-    ~CommandLine()
+    ~Console()
     {
         reset_term();
         exit_time_thread_ = true;
@@ -75,8 +87,8 @@ private:
 public:
 
     void write_line(std::string const &str,
-               CommandLineColor fore = CommandLineColor::None,
-               CommandLineColor back = CommandLineColor::None,
+               ConsoleColor fore = ConsoleColor::None,
+               ConsoleColor back = ConsoleColor::None,
                bool bold = true)
     {
         write_mutex_.lock();
@@ -87,10 +99,10 @@ public:
         time_mutex_.unlock();
         std::printf("\x1b[");
 
-        if (fore != CommandLineColor::None)
+        if (fore != ConsoleColor::None)
             std::printf("3%d", fore);
 
-        if (back != CommandLineColor::None)
+        if (back != ConsoleColor::None)
             std::printf(";4%d",back);
 
         if (bold)
@@ -113,38 +125,30 @@ public:
     void run()
     {
         flush_status_line();
+        char c;
         for (;;)
         {
-            auto n = read(0, read_buf_.data(), read_buf_.size());
-            if (n == 1)
-            {
-                auto c = read_buf_[0];
-                if (c == 10)
-                {
-                    if (push_command())
-                        break;
-                }
-                else if (c == 127)
-                    back_delete();
-                else if (std::isprint(c))
-                    input_char(c);
+            auto key = get_key(c);
+            if (key == ConsoleKey::Return) {
+                if (push_command())
+                    break;
             }
-            else if (n == 3)
-            {
-                auto c = read_buf_[2];
-                if (c == 65)
-                    prev_history();
-                else if (c == 66)
-                    next_history();
-                else if (c == 67)
-                    move_right();
-                else if (c == 68)
-                    move_left();
-            }
+            else if (key == ConsoleKey::Backspace)
+                back_delete();
+            else if (key == ConsoleKey::Up)
+                prev_history();
+            else if (key == ConsoleKey::Down)
+                next_history();
+            else if (key == ConsoleKey::Left)
+                move_left();
+            else if (key == ConsoleKey::Right)
+                move_right();
+            else if (key == ConsoleKey::Printable)
+                input_char(c);
         }
 //        auto cmds = commands_.pop_all();
 //        for (auto &i : cmds)
-//            write_line(i, CommandLineColor::Magenta);
+//            write_line(i, ConsoleColor::Magenta);
     }
 
 private:
@@ -161,6 +165,33 @@ private:
     void reset_term()
     {
         tcsetattr(0, TCSANOW, &term_tmp_);
+    }
+
+    ConsoleKey get_key(char &ch)
+    {
+        auto key = ConsoleKey::Printable ;
+        auto n = read(0, read_buf_.data(), read_buf_.size());
+        if (n == 1) {
+            auto c = read_buf_[0];
+            if (c == 10)
+                key = ConsoleKey::Return;
+            else if (c == 127)
+                key = ConsoleKey::Backspace;
+            else if (std::isprint(c))
+                ch = c;
+        }
+        else if (n == 3) {
+            auto c = read_buf_[2];
+            if (c == 65)
+                key = ConsoleKey::Up;
+            else if (c == 66)
+                key = ConsoleKey::Down;
+            else if (c == 67)
+                key = ConsoleKey::Right;
+            else if (c == 68)
+                key = ConsoleKey::Left;
+        }
+        return key;
     }
 
     void move_left()
@@ -332,13 +363,14 @@ private:
 } // !namespace rain
 
 #define RAIN_DEBUG(str) \
-    rain::CommandLine::get_instance().write_line \
-    (std::string("[ DEBUG ] ") + str, rain::CommandLineColor::Cyan)
+    rain::Console::get_instance().write_line \
+    (std::string("[ DEBUG ] ") + str, rain::ConsoleColor::Cyan)
 
 #define RAIN_WARN(str) \
-    rain::CommandLine::get_instance().write_line \
-    (std::string("[ WARN  ] ") + str, rain::CommandLineColor::Brown)
+    rain::Console::get_instance().write_line \
+    (std::string("[ WARN  ] ") + str, rain::ConsoleColor::Brown)
 
 #define RAIN_ERROR(str) \
-    rain::CommandLine::get_instance().write_line \
-    (std::string("[ ERROR ] ") + str, rain::CommandLineColor::Red)
+    rain::Console::get_instance().write_line \
+    (std::string("[ ERROR ] ") + str, rain::ConsoleColor::Red)
+
