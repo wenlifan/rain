@@ -40,9 +40,11 @@ enum class ConsoleColor : char
 
 enum class ConsoleKey : char
 {
+    Unknown,
     Printable,
     Return,
     Backspace,
+    Delete,
     Left,
     Right,
     Up,
@@ -100,10 +102,10 @@ public:
         std::printf("\x1b[");
 
         if (fore != ConsoleColor::None)
-            std::printf("3%d", fore);
+            std::printf("3%d", (int)fore);
 
         if (back != ConsoleColor::None)
-            std::printf(";4%d",back);
+            std::printf(";4%d",(int)back);
 
         if (bold)
             std::printf(";1");
@@ -129,12 +131,16 @@ public:
         for (;;)
         {
             auto key = get_key(c);
-            if (key == ConsoleKey::Return) {
+            if (key == ConsoleKey::Printable)
+                input_char(c);
+            else if (key == ConsoleKey::Return) {
                 if (push_command())
                     break;
             }
             else if (key == ConsoleKey::Backspace)
                 back_delete();
+            else if (key == ConsoleKey::Delete)
+                forward_delete();
             else if (key == ConsoleKey::Up)
                 prev_history();
             else if (key == ConsoleKey::Down)
@@ -143,8 +149,6 @@ public:
                 move_left();
             else if (key == ConsoleKey::Right)
                 move_right();
-            else if (key == ConsoleKey::Printable)
-                input_char(c);
         }
 //        auto cmds = commands_.pop_all();
 //        for (auto &i : cmds)
@@ -169,8 +173,9 @@ private:
 
     ConsoleKey get_key(char &ch)
     {
-        auto key = ConsoleKey::Printable ;
+        auto key = ConsoleKey::Unknown;
         auto n = read(0, read_buf_.data(), read_buf_.size());
+        //std::printf("get %ld char\r\n", n);
         if (n == 1) {
             auto c = read_buf_[0];
             if (c == 10)
@@ -178,7 +183,7 @@ private:
             else if (c == 127)
                 key = ConsoleKey::Backspace;
             else if (std::isprint(c))
-                ch = c;
+                ch = c, key = ConsoleKey::Printable;
         }
         else if (n == 3) {
             auto c = read_buf_[2];
@@ -190,6 +195,10 @@ private:
                 key = ConsoleKey::Right;
             else if (c == 68)
                 key = ConsoleKey::Left;
+        }
+        else if (n == 4) {
+            if (read_buf_[3] == 126)
+                key = ConsoleKey::Delete;
         }
         return key;
     }
@@ -230,7 +239,7 @@ private:
         std::lock_guard<std::mutex> guard_time(time_mutex_);
         std::printf("\r%s%s%s\x1b[K", time_.c_str(), status_.c_str(), current_buf_.c_str());
         std::fflush(stdout);
-        std::printf("\r\x1b[%ldC", time_.size() + status_.size() + cursor_pos_);
+        std::printf("\r\x1b[%luC", time_.size() + status_.size() + cursor_pos_);
         std::fflush(stdout);
     }
 
@@ -307,6 +316,14 @@ private:
     {
         if (cursor_pos_ != 0)
             current_buf_.erase(--cursor_pos_, 1);
+
+        flush_status_line();
+    }
+
+    void forward_delete()
+    {
+        if (cursor_pos_ != current_buf_.size())
+            current_buf_.erase(cursor_pos_, 1);
 
         flush_status_line();
     }
