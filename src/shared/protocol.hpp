@@ -8,9 +8,11 @@ namespace rain
 enum Protocol : std::uint16_t
 {
     // Common protocol
-    COMM_NONE = 0,
+    COMM_BEGIN = 0,
+    COMM_NONE,
     COMM_PING,
     COMM_PONG,
+    COMM_END,
 
     // Client to LoginServer
     C_LS_BEGIN = 1000,
