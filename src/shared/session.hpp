@@ -37,7 +37,7 @@ public:
 
     //Session(Session const &) = delete;
 
-    tcp::socket & getSocket()
+    tcp::socket & get_socket()
     {
         return socket_;
     }

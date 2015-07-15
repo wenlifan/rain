@@ -58,7 +58,7 @@ private:
     {
         std::cout << "Listen to " << acceptor_.local_endpoint() << std::endl;
         auto session = std::make_shared<Session>(iosp_);
-        acceptor_.async_accept(session->getSocket(), [this, session](std::error_code const &err) {
+        acceptor_.async_accept(session->get_socket(), [this, session](std::error_code const &err) {
             if (!err) {
                 session->start();
 
