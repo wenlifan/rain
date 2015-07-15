@@ -5,7 +5,6 @@
 #include <mutex>
 #include <vector>
 
-#include "singleton.hpp"
 #include "message_pack.hpp"
 
 namespace rain
