@@ -22,10 +22,10 @@ public:
         lua_close(state_);
     }
 
-    bool load_config(std::string str)
+    bool load_config(std::string fname)
     {
-        if (luaL_dofile(state_, str.c_str())) {
-            RAIN_ERROR("Read file <" + str + "> occurs error: " + lua_tostring(state_, -1));
+        if (luaL_dofile(state_, fname.c_str())) {
+            RAIN_ERROR("Read file <" + fname + "> occurs error: " + lua_tostring(state_, -1));
             lua_pop(state_, 1);
             return false;
         }

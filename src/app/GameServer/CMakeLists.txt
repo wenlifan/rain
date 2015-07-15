@@ -12,3 +12,4 @@ set(SOURCE_FILES main.cpp)
 set(HEADER_FILES  )
 
 add_executable(GameServer ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(GameServer lua5.2)

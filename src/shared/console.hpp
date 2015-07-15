@@ -379,15 +379,19 @@ private:
 
 } // !namespace rain
 
+#define RAIN_INFO(str) \
+    rain::Console::get_instance().write_line \
+    ("[ INFO  ] " + (str), rain::ConsoleColor::Green)
+
 #define RAIN_DEBUG(str) \
     rain::Console::get_instance().write_line \
-    (std::string("[ DEBUG ] ") + str, rain::ConsoleColor::Cyan)
+    ("[ DEBUG ] " + (str), rain::ConsoleColor::Cyan)
 
 #define RAIN_WARN(str) \
     rain::Console::get_instance().write_line \
-    (std::string("[ WARN  ] ") + str, rain::ConsoleColor::Brown)
+    ("[ WARN  ] " + (str), rain::ConsoleColor::Brown)
 
 #define RAIN_ERROR(str) \
     rain::Console::get_instance().write_line \
-    (std::string("[ ERROR ] ") + str, rain::ConsoleColor::Red)
+    ("[ ERROR ] " + (str), rain::ConsoleColor::Red)
 
