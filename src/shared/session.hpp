@@ -46,7 +46,7 @@ public:
     {
         socket_.set_option(tcp::no_delay(true));
 
-        SessionManager::getInstance().addSession(this->shared_from_this());
+        SessionManager::get_instance().add_session(this->shared_from_this());
 
         do_read(std::make_shared<MessagePack>(COMM_NONE), 0);
 
@@ -95,7 +95,7 @@ private:
                 std::cout << "Recieved PING!" << std::endl;
             }
             else
-                SessionManager::getInstance().dispatchMessage(this->shared_from_this(), msgp);
+                SessionManager::get_instance().dispatch_message(this->shared_from_this(), msgp);
 
             std::cout << "Package Data Size: " << msgp->data_size() << std::endl;
 
@@ -140,7 +140,7 @@ private:
         auto self = this->shared_from_this();
         if (ping_times_ >= remove_times_)
         {
-            SessionManager::getInstance().removeSession(self);
+            SessionManager::get_instance().remove_session(self);
             return;
         }
 

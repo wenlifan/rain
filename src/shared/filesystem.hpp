@@ -14,7 +14,7 @@ extern "C"
 namespace rain
 {
 
-bool resetWorkDir(std::string const &cmd)
+bool reset_work_dir(std::string const &cmd)
 {
     char buf[PATH_MAX] = {};
     getcwd(buf, PATH_MAX);
@@ -27,7 +27,7 @@ bool resetWorkDir(std::string const &cmd)
     return !(chdir(wd.c_str()));
 }
 
-std::vector<std::string> getSortedDirFiles(std::string const &path)
+std::vector<std::string> get_sorted_dir_files(std::string const &path)
 {
     using F = std::function<void(std::vector<std::string>&, std::string const &)>;
 

@@ -10,9 +10,9 @@
 
 int main(int argc, char *argv[])
 {
-    rain::resetWorkDir(argv[0]);
+    rain::reset_work_dir(argv[0]);
 
-    auto vec = rain::getSortedDirFiles(".");
+    auto vec = rain::get_sorted_dir_files(".");
     for (auto &v : vec)
         std::cout << v << std::endl;
 
