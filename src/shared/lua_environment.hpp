@@ -66,8 +66,7 @@ public:
         (void)std::initializer_list<int>{push_type(std::forward<Args>(args))...};
 
         auto n = sizeof...(args);
-        if (lua_pcall(state_, n, LUA_MULTRET, -n-2))
-        {
+        if (lua_pcall(state_, n, LUA_MULTRET, -n-2)) {
             std::string err = lua_tostring(state_, -1);
             RAIN_ERROR("Call function <" + name + "> failed: " + err);
             lua_pop(state_, lua_gettop(state_));
@@ -120,18 +119,15 @@ private:
     static int stack_trace(lua_State *L)
     {
         lua_Debug dbg = {};
-        auto depth = 5;
+        auto depth = 10;
         std::stringstream ss;
-
-        ss << "\nStack Trace:\n";
-        lua_getstack(L, 2, &dbg);
-
         std::string err = lua_tostring(L, -1);
-        ss << "|- " << err << '\n';
 
-        for (auto i = 1; lua_getstack(L, 1 + i, &dbg) != 0 && i < depth; i++) {
+        ss << "\nStack Trace:\n|- " << err << '\n';
+
+        for (auto i = 0; lua_getstack(L, 2 + i, &dbg) != 0 && i < depth; i++) {
             lua_getinfo(L, "Sln", &dbg);
-            ss << std::string(i * 2u, ' ') << "|- Invoked by " << dbg.short_src;
+            ss << std::string((i+1) * 2u, ' ') << "|- Invoked by " << dbg.short_src;
             ss << '(' << dbg.currentline << "): " << dbg.name << '\n';
         }
 

@@ -38,8 +38,7 @@ public:
         auto ep = tcp::endpoint(asio::ip::address::from_string(ip), port);
         auto session = std::make_shared<Session>(iosp_);
         session->get_socket().async_connect(ep, [session](std::error_code const &err) {
-            if (!err)
-            {
+            if (!err) {
                 session->start();
             }
 

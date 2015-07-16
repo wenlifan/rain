@@ -35,8 +35,7 @@ std::vector<std::string> get_sorted_dir_files(std::string const &path)
     F f = [&](auto &vec, auto const &dir) {
         auto dirp = opendir(dir.c_str());
         struct dirent *dp;
-        while ((dp = readdir(dirp)) != nullptr)
-        {
+        while ((dp = readdir(dirp)) != nullptr) {
             std::string name = dp->d_name;
             if (name == "." || name == "..")
                 continue;

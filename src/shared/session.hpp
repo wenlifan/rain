@@ -65,24 +65,20 @@ private:
                              std::size_t bytes)
     {
         constexpr auto hs = MessagePack::HeaderSize;
-        if (offset + bytes < hs)
-        {
+        if (offset + bytes < hs) {
             std::memcpy(msgp->data() + offset, read_buf_.data() + buf_offset, bytes);
             do_read(msgp, offset + bytes);
         }
-        else if (offset < hs)
-        {
+        else if (offset < hs) {
             auto ws = hs - offset;
             std::memcpy(msgp->data() + offset, read_buf_.data() + buf_offset, ws);
             divide_message_pack(msgp, hs, buf_offset + ws, bytes - ws);
         }
-        else if (offset + bytes < msgp->size())
-        {
+        else if (offset + bytes < msgp->size()) {
             msgp->write_size(read_buf_.data() + buf_offset, bytes);
             do_read(msgp, offset + bytes);
         }
-        else
-        {
+        else {
             auto ws = msgp->size() - offset;
             msgp->write_size(read_buf_.data() + buf_offset, ws);
 
@@ -109,8 +105,7 @@ private:
         socket_.async_read_some(
             asio::buffer(read_buf_),
             [this, self, msgp, offset](std::error_code const &err, std::size_t bytes) {
-                if (!err)
-                {
+                if (!err) {
                     divide_message_pack(msgp, offset, 0, bytes);
                 }
                 std::cout << "async_read_some err: " << err.message() << std::endl;
@@ -123,10 +118,8 @@ private:
         socket_.async_write_some(
             asio::buffer(msgp->data() + offset, msgp->size() - offset),
             [this, self, msgp, offset](std::error_code const &err, std::size_t bytes) {
-                if (!err)
-                {
-                    if (bytes < msgp->size() - offset)
-                    {
+                if (!err) {
+                    if (bytes < msgp->size() - offset) {
                         do_write(msgp, offset + bytes);
                     }
                 }
@@ -138,16 +131,14 @@ private:
     void do_ping()
     {
         auto self = this->shared_from_this();
-        if (ping_times_ >= remove_times_)
-        {
+        if (ping_times_ >= remove_times_) {
             SessionManager::get_instance().remove_session(self);
             return;
         }
 
         timer_.expires_from_now(std::chrono::milliseconds(ping_interval_));
-        timer_.async_wait([this, self](std::error_code const &err){
-            if (!err)
-            {
+        timer_.async_wait([this, self] (std::error_code const &err) {
+            if (!err) {
                 write(std::make_shared<MessagePack>(COMM_PING));
                 do_ping();
                 ping_times_++;

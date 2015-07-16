@@ -71,8 +71,7 @@ private:
         reset_time();
 
         time_thread_ = std::thread([this] {
-            while (!exit_time_thread_)
-            {
+            while (!exit_time_thread_) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(200));
                 reset_time();
                 flush_status_line();
@@ -110,7 +109,7 @@ public:
         if (bold)
             std::printf(";1");
 
-        std::printf("m%s\x1b[m\r\n", str.c_str());
+        std::printf("m%s\x1b[m\n", str.c_str());
         write_mutex_.unlock();
 
         flush_status_line();
@@ -128,8 +127,7 @@ public:
     {
         flush_status_line();
         char c;
-        for (;;)
-        {
+        for (;;) {
             auto key = get_key(c);
             if (key == ConsoleKey::Printable)
                 input_char(c);
@@ -246,11 +244,10 @@ private:
     bool push_command()
     {
         write_mutex_.lock();
-        std::printf("\r\n");
+        std::printf("\n");
         write_mutex_.unlock();
 
-        if (current_buf_.empty())
-        {
+        if (current_buf_.empty()) {
             flush_status_line();
             return false;
         }
@@ -266,13 +263,11 @@ private:
         cursor_pos_ = 0;
         history_iter_ = history_.end();
 
-        if (history_.back() == "quit")
-        {
+        if (history_.back() == "quit") {
             flush_status_line();
             return true;
         }
-        else if (history_.back() == "clear")
-        {
+        else if (history_.back() == "clear") {
             clear_screen();
             flush_status_line();
             return false;
@@ -394,4 +389,20 @@ private:
 #define RAIN_ERROR(str) \
     rain::Console::get_instance().write_line \
     ("[ ERROR ] " + (str), rain::ConsoleColor::Red)
+
+#define LUA_INFO(str) \
+    rain::Console::get_instance().write_line \
+    ("[ LUA-INFO  ] " + (str), rain::ConsoleColor::Green)
+
+#define LUA_DEBUG(str) \
+    rain::Console::get_instance().write_line \
+    ("[ LUA-DEBUG ] " + (str), rain::ConsoleColor::Cyan)
+
+#define LUA_WARN(str) \
+    rain::Console::get_instance().write_line \
+    ("[ LUA-WARN  ] " + (str), rain::ConsoleColor::Brown)
+
+#define LUA_ERROR(str) \
+    rain::Console::get_instance().write_line \
+    ("[ LUA-ERROR ] " + (str), rain::ConsoleColor::Red)
 
