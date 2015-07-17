@@ -7,11 +7,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra -pthread")
 
 set(RAIN_SHARED_DIR ${CMAKE_SOURCE_DIR}/src/shared)
 set(ASIO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/asio)
-set(LUA_INCLUDE_DIR /usr/include/lua5.2)
 
-include_directories(${ASIO_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${RAIN_SHARED_DIR})
+include_directories(${ASIO_INCLUDE_DIR} ${RAIN_SHARED_DIR})
 add_definitions(-DASIO_STANDALONE)
-link_libraries(lua5.2)
+link_libraries(lua)
+
+if(CMAKE_SYSTEM MATCHES "MSYS|CYGWIN")
+    add_definitions(-D__USE_W32_SOCKETS -D_WIN32_WINNT=0x0601)
+    link_libraries(ws2_32 wsock32)
+endif()
 
 add_subdirectory(src rain)
 
@@ -42,3 +46,4 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES "Release")
 elseif(${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo")
 	message(STATUS "Compiler build flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif()
+
