@@ -5,10 +5,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra -pthread")
 #set(CMAKE_CXX_FLAGS_DEBUG "-g")
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+set(ASIO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/third_party/asio)
+set(LUA_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/third_party/lua)
 set(RAIN_SHARED_DIR ${CMAKE_SOURCE_DIR}/src/shared)
-set(ASIO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/asio)
 
-include_directories(${ASIO_INCLUDE_DIR} ${RAIN_SHARED_DIR})
+include_directories(${ASIO_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${RAIN_SHARED_DIR})
 add_definitions(-DASIO_STANDALONE)
 link_libraries(lua)
 

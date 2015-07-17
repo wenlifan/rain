@@ -23,7 +23,7 @@ int main(int, char *argv[])
 {
     rain::reset_work_dir(argv[0]);
 
-    auto vec = rain::get_sorted_dir_files(".");
+    auto vec = rain::get_sorted_dir_files("script");
     for (auto &v : vec)
         std::cout << v << std::endl;
 
