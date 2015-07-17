@@ -19,7 +19,7 @@ static int say_hello(lua_State *L)
     return 1;
 }
 
-int main(int argc, char *argv[])
+int main(int, char *argv[])
 {
     rain::reset_work_dir(argv[0]);
 
