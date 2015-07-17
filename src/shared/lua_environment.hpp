@@ -118,7 +118,7 @@ private:
 
     static int stack_trace(lua_State *L)
     {
-        lua_Debug dbg = {};
+        lua_Debug dbg;
         auto depth = 10;
         std::stringstream ss;
         std::string err = lua_tostring(L, -1);
