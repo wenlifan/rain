@@ -7,68 +7,76 @@ namespace rain
 
 enum Protocol : std::uint16_t
 {
-    // Common protocol
+    // common protocol
     COMM_BEGIN = 0,
     COMM_NONE,
     COMM_PING,
     COMM_PONG,
     COMM_END,
 
-    // Client to LoginServer
+    // client to login_server
     C_LS_BEGIN = 1000,
     C_LS_END,
 
-    // LoginServer to Client
+    // login_server to client
     LS_C_BEGIN = 2000,
     LS_C_END,
 
-    // LoginServer to AccountServer
+    // login_server to account_server
     LS_AS_BEGIN = 3000,
     LS_AS_END,
 
-    // AccountServer to LoginServer
+    // account_server to login_server
     AS_LS_BEGIN = 4000,
     AS_LS_END,
 
-    // LoginServer to GateWay
+    // login_server to gateway_server
     LS_GW_BEGIN = 5000,
     LS_GW_END,
 
-    // GateWay to LoginServer
+    // gateway_server to login_server
     GW_LS_BEGIN = 6000,
     GW_LS_END,
 
-    // Client to GateWay
+    // client to gateway_server
     C_GW_BEGIN = 7000,
     C_GW_END,
 
-    // GateWay to Client
+    // gateway_server to client
     GW_C_BEGIN = 8000,
     GW_C_END,
 
-    // GateWay to GameServer
+    // gateway_server to game_server
     GW_GS_BEGIN = 9000,
     GW_GS_END,
 
-    // GateServer to GateWay
+    // game_server to gateway_server
     GS_GW_BEGIN = 10000,
     GS_GW_END,
 
-    // GameServer to DataServer
+    // game_server to data_server
     GS_DS_BEGIN = 11000,
     GS_DS_END,
 
-    // DataServer to GameServer
+    // data_server to game_server
     DS_GS_BEGIN = 12000,
     DS_GS_END,
 
-    // GameServer to SharedServer
+    // game_server to shared_server
     GS_SS_BEGIN = 13000,
     GS_SS_END,
 
-    // SharedServer to GameServer
+    // shared_server to game_server
     SS_GS_BEGIN = 14000,
     SS_GS_END,
+
+    // shared_server to data_server
+    SS_DS_BEGIN = 15000,
+    SS_DS_END,
+
+    // data_server to shared_server
+    DS_SS_BEGIN = 16000,
+    DS_SS_END,
 };
 
 } // !namespace rain

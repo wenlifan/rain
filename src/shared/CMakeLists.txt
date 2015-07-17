@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_custom_target(Shared SOURCES
+add_custom_target(rain_shared SOURCES
     filesystem.hpp
     singleton.hpp
     protocol.hpp

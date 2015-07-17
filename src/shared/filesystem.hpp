@@ -4,6 +4,8 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <cstdlib>
+#include <cassert>
 
 extern "C"
 {
@@ -16,10 +18,12 @@ namespace rain
 
 bool reset_work_dir(std::string const &cmd)
 {
-    char buf[PATH_MAX] = {};
-    getcwd(buf, PATH_MAX);
+    auto dir = get_current_dir_name();
+    assert(dir);
 
-    auto wd = std::string(buf);
+    auto wd = std::string(dir);
+    std::free(dir);
+
     auto pos = cmd.rfind('/');
 
     if (pos != std::string::npos)
