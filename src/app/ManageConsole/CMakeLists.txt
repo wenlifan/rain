@@ -4,5 +4,4 @@ set(SOURCE_FILES main.cpp)
 set(HEADER_FILES  )
 
 #add_executable(ManageConsole ${SOURCE_FILES} ${HEADER_FILES})
-#target_link_libraries(ManageConsole lua5.2)
 #install(TARGETS ManageConsole DESTINATION .)
