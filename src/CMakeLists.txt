@@ -19,7 +19,7 @@ add_subdirectory(shared)
 add_subdirectory(app)
 add_subdirectory(test_all)
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
     message(STATUS "Rain compiler build flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 elseif(${CMAKE_BUILD_TYPE} MATCHES "Release")
     message(STATUS "Rain compiler build flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
