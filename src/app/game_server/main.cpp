@@ -9,6 +9,7 @@
 #include "server_session_manager.hpp"
 
 #include "lua_environment.hpp"
+#include "config_reader.hpp"
 #include "console.hpp"
 
 static int say_hello(lua_State *L)
@@ -49,6 +50,11 @@ int main(int, char *argv[])
     lenv.add_functions(reg);
     lenv.do_file("test.lua");
     lenv.call("hello", nullptr, "mogu", "tingting");
+
+    rain::ConfigReader reader;
+    reader.load_config("wakaka.lua");
+    double d;
+    reader.read_double(d, "none");
     rain::Console::get_instance().run();
 
 

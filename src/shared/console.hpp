@@ -237,7 +237,7 @@ private:
         std::lock_guard<std::mutex> guard_time(time_mutex_);
         std::printf("\r%s%s%s\x1b[K", time_.c_str(), status_.c_str(), current_buf_.c_str());
         std::fflush(stdout);
-        std::printf("\r\x1b[%luC", time_.size() + status_.size() + cursor_pos_);
+        std::printf("\r\x1b[%uC", unsigned(time_.size() + status_.size() + cursor_pos_));
         std::fflush(stdout);
     }
 
