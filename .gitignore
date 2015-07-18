@@ -1,3 +1,7 @@
 build/**/*
-rain/**/*
+!build/build.sh
+
+server/**/*
+!server/run.sh
+
 .idea/**/*
