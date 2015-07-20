@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/server)
 
 add_subdirectory(third_party)
