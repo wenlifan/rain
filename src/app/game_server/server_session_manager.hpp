@@ -2,9 +2,9 @@
 
 #include <memory>
 
+#include "singleton.hpp"
 #include "session.hpp"
 #include "message_pack.hpp"
-#include "singleton.hpp"
 
 namespace rain
 {
@@ -18,12 +18,6 @@ class ServerSessionManager : public Singleton<ServerSessionManager>
     using MessagePackPtr = std::shared_ptr<MessagePack>;
 
 public:
-    static ServerSessionManager &get_instance()
-    {
-        static ServerSessionManager mgr;
-        return mgr;
-    }
-
     void add_session(SessionPtr session)
     {
 
@@ -37,6 +31,12 @@ public:
     void dispatch_message(SessionPtr session, MessagePackPtr msgp)
     {
 
+    }
+
+public:
+    bool init()
+    {
+        return true;
     }
 
 private:

@@ -2,8 +2,9 @@
 
 #include <system_error>
 #include <memory>
+#include <thread>
 
-#include <iostream>
+//#include <iostream>
 
 #include "asio.hpp"
 
@@ -23,7 +24,7 @@ public:
             : iosp_(std::make_shared<IOService>())
             , trivial_work_(*iosp_)
     {
-        start();
+        run();
     }
 
     ClientNode(ClientNode &&) = default;
@@ -42,20 +43,27 @@ public:
                 session->start();
             }
 
-            std::cout << "connect err: " << err.message() << std::endl;
+            //std::cout << "connect err: " << err.message() << std::endl;
         });
     }
 
-private:
-    void start()
+    bool init()
     {
-        work_thread_ = std::thread([this]{iosp_->run();});
+        return true;
     }
 
+    void run()
+    {
+        if (!work_thread_.joinable())
+            work_thread_ = std::thread([this]{iosp_->run();});
+    }
+
+private:
     void stop()
     {
         iosp_->stop();
-        work_thread_.join();
+        if (work_thread_.joinable())
+            work_thread_.join();
     }
 
 private:

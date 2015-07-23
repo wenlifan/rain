@@ -118,9 +118,14 @@ public:
     void set_status(float load = 0.0)
     {
         char buf[32] = {};
-        std::sprintf(buf, " %5.2f%% > ", load);
+        std::sprintf(buf, " %5.2f%% ", load);
         std::lock_guard<std::mutex> guard(status_mutex_);
         status_ = buf;
+    }
+
+    void set_name(std::string name)
+    {
+        name_ = std::move(name);
     }
 
     void run()
@@ -235,9 +240,21 @@ private:
         std::lock_guard<std::mutex> guard(write_mutex_);
         std::lock_guard<std::mutex> guard_status(status_mutex_);
         std::lock_guard<std::mutex> guard_time(time_mutex_);
-        std::printf("\r%s%s%s\x1b[K", time_.c_str(), status_.c_str(), current_buf_.c_str());
+
+        std::printf("\r%s%s%s > %s\x1b[K",
+                    time_.c_str(),
+                    status_.c_str(),
+                    name_.c_str(),
+                    current_buf_.c_str());
+
         std::fflush(stdout);
-        std::printf("\r\x1b[%uC", unsigned(time_.size() + status_.size() + cursor_pos_));
+
+        std::printf("\r\x1b[%uC", unsigned(time_.size() +
+                                           status_.size() +
+                                           name_.size() +
+                                           3 +
+                                           cursor_pos_));
+
         std::fflush(stdout);
     }
 
@@ -356,6 +373,8 @@ private:
     std::list<std::string> history_;
     std::list<std::string>::iterator history_iter_;
 
+    std::string name_;
+
     std::string status_;
     std::mutex status_mutex_;
 
@@ -376,33 +395,33 @@ private:
 
 #define RAIN_INFO(str) \
     rain::Console::get_instance().write_line \
-    ("[ INFO  ] " + (str), rain::ConsoleColor::Green)
+    (std::string("[ INFO  ] ") + (str), rain::ConsoleColor::Green)
 
 #define RAIN_DEBUG(str) \
     rain::Console::get_instance().write_line \
-    ("[ DEBUG ] " + (str), rain::ConsoleColor::Cyan)
+    (std::string("[ DEBUG ] ") + (str), rain::ConsoleColor::Cyan)
 
 #define RAIN_WARN(str) \
     rain::Console::get_instance().write_line \
-    ("[ WARN  ] " + (str), rain::ConsoleColor::Brown)
+    (std::string("[ WARN  ] ") + (str), rain::ConsoleColor::Brown)
 
 #define RAIN_ERROR(str) \
     rain::Console::get_instance().write_line \
-    ("[ ERROR ] " + (str), rain::ConsoleColor::Red)
+    (std::string("[ ERROR ] ") + (str), rain::ConsoleColor::Red)
 
 #define LUA_INFO(str) \
     rain::Console::get_instance().write_line \
-    ("[ LUA-INFO  ] " + (str), rain::ConsoleColor::Green)
+    (std::string("[ LUA-INFO  ] ") + (str), rain::ConsoleColor::Green)
 
 #define LUA_DEBUG(str) \
     rain::Console::get_instance().write_line \
-    ("[ LUA-DEBUG ] " + (str), rain::ConsoleColor::Cyan)
+    (std::string("[ LUA-DEBUG ] ") + (str), rain::ConsoleColor::Cyan)
 
 #define LUA_WARN(str) \
     rain::Console::get_instance().write_line \
-    ("[ LUA-WARN  ] " + (str), rain::ConsoleColor::Brown)
+    (std::string("[ LUA-WARN  ] ") + (str), rain::ConsoleColor::Brown)
 
 #define LUA_ERROR(str) \
     rain::Console::get_instance().write_line \
-    ("[ LUA-ERROR ] " + (str), rain::ConsoleColor::Red)
+    (std::string("[ LUA-ERROR ] ") + (str), rain::ConsoleColor::Red)
 

@@ -35,7 +35,7 @@ public:
     {
     }
 
-    //Session(Session const &) = delete;
+    Session(Session const &) = delete;
 
     tcp::socket & get_socket()
     {
@@ -84,16 +84,16 @@ private:
 
             if (msgp->protocol() == COMM_PONG) {
                 ping_times_ = 0;
-                std::cout << "Recieved PONG!" << std::endl;
+                //std::cout << "Recieved PONG!" << std::endl;
             }
             else if (msgp->protocol() == COMM_PING) {
                 do_pong();
-                std::cout << "Recieved PING!" << std::endl;
+                //std::cout << "Recieved PING!" << std::endl;
             }
             else
                 SessionManager::get_instance().dispatch_message(this->shared_from_this(), msgp);
 
-            std::cout << "Package Data Size: " << msgp->data_size() << std::endl;
+            //std::cout << "Package Data Size: " << msgp->data_size() << std::endl;
 
             divide_message_pack(std::make_shared<MessagePack>(COMM_NONE), 0, buf_offset + ws, bytes - ws);
         }
@@ -108,7 +108,7 @@ private:
                 if (!err) {
                     divide_message_pack(msgp, offset, 0, bytes);
                 }
-                std::cout << "async_read_some err: " << err.message() << std::endl;
+                //std::cout << "async_read_some err: " << err.message() << std::endl;
             });
     }
 
@@ -124,7 +124,7 @@ private:
                     }
                 }
 
-                std::cout << "async_write_some err: " << err.message() << std::endl;
+                //std::cout << "async_write_some err: " << err.message() << std::endl;
             });
     }
 
