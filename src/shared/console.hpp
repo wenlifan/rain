@@ -72,7 +72,7 @@ private:
 
         time_thread_ = std::thread([this] {
             while (!exit_time_thread_) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 reset_time();
                 flush_status_line();
             }
@@ -393,13 +393,17 @@ private:
 
 } // !namespace rain
 
-#define RAIN_INFO(str) \
-    rain::Console::get_instance().write_line \
-    (std::string("[ INFO  ] ") + (str), rain::ConsoleColor::Green)
-
+#if defined(NDEBUG)
+#define RAIN_DEBUG(str) ((void)0)
+#else
 #define RAIN_DEBUG(str) \
     rain::Console::get_instance().write_line \
     (std::string("[ DEBUG ] ") + (str), rain::ConsoleColor::Cyan)
+#endif
+
+#define RAIN_INFO(str) \
+    rain::Console::get_instance().write_line \
+    (std::string("[ INFO  ] ") + (str), rain::ConsoleColor::Green)
 
 #define RAIN_WARN(str) \
     rain::Console::get_instance().write_line \
@@ -409,13 +413,18 @@ private:
     rain::Console::get_instance().write_line \
     (std::string("[ ERROR ] ") + (str), rain::ConsoleColor::Red)
 
-#define LUA_INFO(str) \
-    rain::Console::get_instance().write_line \
-    (std::string("[ LUA-INFO  ] ") + (str), rain::ConsoleColor::Green)
 
+#if defined(NDEBUG)
+#define LUA_DEBUG(str) ((void)0)
+#else
 #define LUA_DEBUG(str) \
     rain::Console::get_instance().write_line \
     (std::string("[ LUA-DEBUG ] ") + (str), rain::ConsoleColor::Cyan)
+#endif
+
+#define LUA_INFO(str) \
+    rain::Console::get_instance().write_line \
+    (std::string("[ LUA-INFO  ] ") + (str), rain::ConsoleColor::Green)
 
 #define LUA_WARN(str) \
     rain::Console::get_instance().write_line \
