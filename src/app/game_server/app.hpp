@@ -3,7 +3,7 @@
 #include "singleton.hpp"
 #include "config_reader.hpp"
 #include "console.hpp"
-#include "gateway_proxy.hpp"
+#include "gateway_server_proxy.hpp"
 #include "data_server_proxy.hpp"
 #include "shared_server_proxy.hpp"
 
@@ -37,29 +37,27 @@ public:
 private:
     void init_all()
     {
-        // load config
         RAIN_INFO("Load server config file...");
         if (!ConfigReader::get_instance().load_config("game_server_config.lua")) {
             RAIN_ERROR("Load server config error! Server start failed!");
             return;
         }
 
-        // proxys init
         RAIN_INFO("Init gateway_server proxy...");
-        if (!GatewayProxy::get_instance().init()) {
+        if (!GatewayServerProxy::get_instance().init()) {
             RAIN_ERROR("Init gateway_server proxy error! Server start failed!");
-            return;
-        }
-
-        RAIN_INFO("Init data_server proxy...");
-        if (!DataServerProxy::get_instance().init()) {
-            RAIN_ERROR("Init data_server proxy error! Server start failed!");
             return;
         }
 
         RAIN_INFO("Init shared_server proxy...");
         if (!SharedServerProxy::get_instance().init()) {
             RAIN_ERROR("Init shared_server proxy error! Server start failed!");
+            return;
+        }
+
+        RAIN_INFO("Init data_server proxy...");
+        if (!DataServerProxy::get_instance().init()) {
+            RAIN_ERROR("Init data_server proxy error! Server start failed!");
             return;
         }
 
@@ -70,6 +68,14 @@ private:
 
     void stop_all()
     {
+        RAIN_INFO("Stop gateway_server proxy...");
+        GatewayServerProxy::get_instance().stop();
+
+        RAIN_INFO("Stop shared_server proxy...");
+        SharedServerProxy::get_instance().stop();
+
+        RAIN_INFO("Stop data_server proxy...");
+        DataServerProxy::get_instance().stop();
     }
 
 private:

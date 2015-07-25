@@ -7,16 +7,15 @@
 namespace rain
 {
 
-class GatewayProxy
-    : public ServerProxy<GatewayProxy>
-    , public Singleton<GatewayProxy>
+class GatewayServerProxy
+    : public Singleton<GatewayServerProxy>
 {
-    friend Singleton<GatewayProxy>;
-    GatewayProxy() = default;
+    friend Singleton<GatewayServerProxy>;
+    GatewayServerProxy() = default;
 
-    using TargetSession = Session<GatewayProxy>;
+    using TargetSession = Session<GatewayServerProxy>;
     using TargetSessionPtr = std::shared_ptr<TargetSession>;
-    using Proxy = ClientProxy<GatewayProxy>;
+    using Proxy = ServerProxy<GatewayServerProxy>;
     using ProxyPtr = std::unique_ptr<Proxy>;
 
 public:
@@ -35,15 +34,34 @@ public:
 
     }
 
+    std::size_t get_ping_interval() const
+    {
+        return proxy_->get_ping_interval();
+    }
+
+    std::size_t get_break_times() const
+    {
+        return proxy_->get_break_times();
+    }
+
 public:
     bool init()
     {
-        return ServerProxy::init(
-            "Server.Gateway.PingInterval",
-            "Server.Gateway.BreakTimes",
-            "Server.Gateway.Port"
+        proxy_ = std::make_unique<Proxy>();
+        return proxy_->init(
+            "Server.GatewayServer.PingInterval",
+            "Server.GatewayServer.BreakTimes",
+            "Server.GatewayServer.Port"
         );
     }
+
+    void stop()
+    {
+        proxy_.reset();
+    }
+
+private:
+    ProxyPtr proxy_;
 };
 
 } // !namespace rain

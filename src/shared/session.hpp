@@ -10,6 +10,7 @@
 #include "asio.hpp"
 
 #include "message_pack.hpp"
+#include "console.hpp"
 
 namespace rain
 {
@@ -140,6 +141,8 @@ private:
                 write(std::make_shared<MessagePack>(COMM_PING));
                 do_ping();
                 ping_times_++;
+            } else {
+                RAIN_ERROR("Timer error: " + err.message());
             }
         });
     }

@@ -1,6 +1,6 @@
 
 Server = {
-    Gateway = {
+    GatewayServer = {
         Port = 11005,
         PingInterval = 2000, -- ms
         BreakTimes = 3,

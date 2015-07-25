@@ -1,6 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <chrono>
+#include <thread>
+#include <atomic>
 
 #include "basic_proxy.hpp"
 #include "session.hpp"
@@ -13,16 +16,25 @@ namespace rain
 template <typename Proxy>
 class ClientProxy
     : public BasicProxy
+    , public std::enable_shared_from_this<ClientProxy<Proxy>>
 {
-protected:
     using TargetSession = Session<Proxy>;
     using TargetSessionPtr = std::shared_ptr<TargetSession>;
     using TargetClientNode = ClientNode<TargetSession>;
     using TargetClientNodePtr = std::shared_ptr<TargetClientNode>;
 
-    ClientProxy() = default;
+public:
+    ~ClientProxy()
+    {
+        RAIN_DEBUG("Come's here");
+        exit_ = true;
+        if (auto_conn_thread_.joinable())
+            auto_conn_thread_.join();
 
-protected:
+        RAIN_DEBUG("Come's here, too");
+    }
+
+public:
     bool init(
         std::string const &ping_interval_str,
         std::string const &break_times_str,
@@ -37,27 +49,19 @@ protected:
 private:
     void error_handler(std::error_code const &err)
     {
-        RAIN_WARN("Proxy client node error: " + err.message());
-    }
+        RAIN_DEBUG("Proxy client node error: " + err.message());
 
-    bool init_params(std::string const &ping_interval_str, std::string const &break_times_str)
-    {
-        auto &reader = ConfigReader::get_instance();
+        if (!exit_)
+        {
+            if (auto_conn_thread_.joinable())
+                auto_conn_thread_.join();
 
-        int pi, bt;
-        if (!reader.read_int(pi, ping_interval_str)) {
-            RAIN_ERROR("Read PingInterval failed");
-            return false;
+            auto self = this->shared_from_this();
+            auto_conn_thread_ = std::thread([this, self] {
+                std::this_thread::sleep_for(std::chrono::milliseconds(ping_interval_));
+                do_connect();
+            });
         }
-        if (!reader.read_int(bt, break_times_str)) {
-            RAIN_ERROR("Read PingInterval failed");
-            return false;
-        }
-
-        ping_interval_ = static_cast<std::size_t>(pi);
-        break_times_ = static_cast<std::size_t>(bt);
-
-        return true;
     }
 
     bool init_node(std::string const &ip_str, std::string const &port_str)
@@ -65,9 +69,8 @@ private:
         client_ = std::make_shared<TargetClientNode>();
         auto &reader = ConfigReader::get_instance();
 
-        std::string ip;
         int port;
-        if (!reader.read_string(ip, ip_str)) {
+        if (!reader.read_string(ip_, ip_str)) {
             RAIN_ERROR("Read " + ip_str + " failed");
             return false;
         }
@@ -75,22 +78,32 @@ private:
             RAIN_ERROR("Read " + port_str + " failed");
             return false;
         }
+        port_ = static_cast<unsigned short>(port);
 
-        RAIN_DEBUG("Connect to server: " + ip + ':' + std::to_string(port));
+        RAIN_DEBUG("Connect to server: " + ip_ + ':' + std::to_string(port_));
 
-        client_->connect(ip,
-                         static_cast<unsigned short>(port),
+        do_connect();
+
+        return true;
+    }
+
+    void do_connect()
+    {
+        client_->connect(ip_,
+                         port_,
                          std::bind(&ClientProxy::error_handler,
                                    this,
                                    std::placeholders::_1
                          )
         );
-
-        return true;
     }
 
-protected:
+private:
     TargetClientNodePtr client_;
+    std::thread auto_conn_thread_;
+    std::atomic_bool exit_{false};
+    std::string ip_;
+    unsigned short port_;
 };
 
 } // !namespace rain

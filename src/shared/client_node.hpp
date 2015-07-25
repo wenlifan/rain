@@ -38,15 +38,16 @@ public:
     {
         auto ep = tcp::endpoint(asio::ip::address::from_string(ip), port);
         auto session = std::make_shared<Session>(iosp_);
-        session->get_socket().async_connect(ep,
-                                            [session, call_back](std::error_code const &err) {
-                                                if (!err) {
-                                                    session->start();
-                                                } else {
-                                                    RAIN_WARN("Connect to server failed.");
-                                                    call_back(err);
-                                                }
-                                            });
+        session->get_socket().async_connect(
+            ep,
+            [session, call_back, ip, port](std::error_code const &err) {
+                if (!err) {
+                    session->start();
+                } else {
+                    RAIN_WARN("Connect to server " + ip + ':' + std::to_string(port) + " failed.");
+                    call_back(err);
+                }
+            });
     }
 
 private:
