@@ -4,19 +4,22 @@
 
 #include "lua.hpp"
 
+#include "singleton.hpp"
 #include "console.hpp"
 
 namespace rain
 {
 
 class ConfigReader
+    : public Singleton<ConfigReader>
 {
-public:
+    friend Singleton<ConfigReader>;
     ConfigReader()
         : state_(luaL_newstate())
     {
     }
 
+public:
     ~ConfigReader()
     {
         lua_close(state_);

@@ -23,16 +23,14 @@ class Session
     using IOService = asio::io_service;
     using IOServicePtr = std::shared_ptr<IOService>;
 
-    using MessagePackPtr = std::shared_ptr<MessagePack>;
-
 public:
-    Session(IOServicePtr ptr, std::size_t ping_interval = 2000, std::size_t remove_times = 3)
+    Session(IOServicePtr ptr)
             : iosp_(ptr)
             , socket_(*ptr)
             , timer_(*ptr)
-            , ping_interval_(ping_interval)
-            , remove_times_(remove_times)
     {
+        ping_interval_ = SessionManager::get_instance().get_ping_interval();
+        break_times_ = SessionManager::get_instance().get_break_times();
     }
 
     Session(Session const &) = delete;
@@ -131,7 +129,7 @@ private:
     void do_ping()
     {
         auto self = this->shared_from_this();
-        if (ping_times_ >= remove_times_) {
+        if (ping_times_ >= break_times_) {
             SessionManager::get_instance().remove_session(self);
             return;
         }
@@ -156,8 +154,10 @@ private:
     tcp::socket socket_;
     asio::steady_timer timer_;
     std::array<char, 4096> read_buf_;
+
     std::size_t ping_interval_; // ms
-    std::size_t remove_times_;
+    std::size_t break_times_;
+
     std::atomic_size_t ping_times_{0};
 };
 

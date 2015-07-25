@@ -6,6 +6,9 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/server)
 add_subdirectory(third_party)
 add_subdirectory(src rain)
 
+file(GLOB_RECURSE TEMPLATE_FILES templates/*.*)
+add_custom_target(template_files SOURCES ${TEMPLATE_FILES})
+
 install(DIRECTORY templates/ DESTINATION .)
 
 add_custom_target(debug

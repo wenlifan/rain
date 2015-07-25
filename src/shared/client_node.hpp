@@ -4,8 +4,6 @@
 #include <memory>
 #include <thread>
 
-//#include <iostream>
-
 #include "asio.hpp"
 
 namespace rain
@@ -18,11 +16,12 @@ class ClientNode
 {
     using IOService = asio::io_service;
     using IOServicePtr = std::shared_ptr<IOService>;
+    using ErrorCallBack = std::function<void(std::error_code const &err)>;
 
 public:
     ClientNode()
-            : iosp_(std::make_shared<IOService>())
-            , trivial_work_(*iosp_)
+        : iosp_(std::make_shared<IOService>())
+        , work_keeper_(*iosp_)
     {
         run();
     }
@@ -34,33 +33,32 @@ public:
         stop();
     }
 
-    void connect(std::string const &ip, unsigned short port)
+public:
+    void connect(std::string const &ip, unsigned short port, ErrorCallBack const &call_back)
     {
         auto ep = tcp::endpoint(asio::ip::address::from_string(ip), port);
         auto session = std::make_shared<Session>(iosp_);
-        session->get_socket().async_connect(ep, [session](std::error_code const &err) {
-            if (!err) {
-                session->start();
-            }
-
-            //std::cout << "connect err: " << err.message() << std::endl;
-        });
+        session->get_socket().async_connect(ep,
+                                            [session, call_back](std::error_code const &err) {
+                                                if (!err) {
+                                                    session->start();
+                                                } else {
+                                                    RAIN_WARN("Connect to server failed.");
+                                                    call_back(err);
+                                                }
+                                            });
     }
 
-    bool init()
-    {
-        return true;
-    }
-
+private:
     void run()
     {
         if (!work_thread_.joinable())
             work_thread_ = std::thread([this]{iosp_->run();});
     }
 
-private:
     void stop()
     {
+        // TODO: safe stop (shutdown socket first)
         iosp_->stop();
         if (work_thread_.joinable())
             work_thread_.join();
@@ -68,7 +66,7 @@ private:
 
 private:
     IOServicePtr iosp_;
-    IOService::work trivial_work_;
+    IOService::work work_keeper_;
     std::thread work_thread_;
 };
 

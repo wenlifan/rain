@@ -3,9 +3,6 @@
 #include "singleton.hpp"
 #include "config_reader.hpp"
 #include "console.hpp"
-#include "server_session_manager.hpp"
-#include "server_node.hpp"
-#include "client_node.hpp"
 #include "gateway_proxy.hpp"
 #include "data_server_proxy.hpp"
 #include "shared_server_proxy.hpp"
@@ -18,86 +15,64 @@ class App : public Singleton<App>
     friend Singleton<App>;
     App() = default;
 
-    using GWServerType = ServerNode<Session<ServerSessionManager>>;
-    using DSClientType = ClientNode<Session<DataServerProxy>>;
-    using SSClientType = ClientNode<Session<SharedServerProxy>>;
-
 public:
     void run()
     {
         auto &console = Console::get_instance();
         console.set_name("GameServer");
 
-        do_run();
-        console.run();
-        do_stop();
-    }
+        try {
+            init_all();
+        } catch (std::exception &err) {
+            RAIN_ERROR(std::string("Init server occurs Exception: ") + err.what());
+        } catch (...) {
+            RAIN_ERROR("Note: Init server occurs [Unknown] Exception.");
+        }
 
-    ConfigReader & get_reader()
-    {
-        return reader_;
+        console.run();
+
+        stop_all();
     }
 
 private:
-    void do_run()
+    void init_all()
     {
         // load config
         RAIN_INFO("Load server config file...");
-        if (!reader_.load_config("game_server_config.lua")) {
+        if (!ConfigReader::get_instance().load_config("game_server_config.lua")) {
             RAIN_ERROR("Load server config error! Server start failed!");
             return;
         }
-        RAIN_INFO("Success!");
 
-        // session manager init
-        RAIN_INFO("Init ServerSessionManager...");
-        if (!ServerSessionManager::get_instance().init()) {
-            RAIN_ERROR("Init ServerSessionManager error! Server start failed!");
+        // proxys init
+        RAIN_INFO("Init gateway_server proxy...");
+        if (!GatewayProxy::get_instance().init()) {
+            RAIN_ERROR("Init gateway_server proxy error! Server start failed!");
             return;
         }
-        RAIN_INFO("Success!");
 
-        // server node init
-        RAIN_INFO("Init gateway_server server node...");
-        if (!gw_server_.init()) {
-            RAIN_ERROR("Init gateway_server server node error! Server start failed!");
+        RAIN_INFO("Init data_server proxy...");
+        if (!DataServerProxy::get_instance().init()) {
+            RAIN_ERROR("Init data_server proxy error! Server start failed!");
             return;
         }
-        RAIN_INFO("Success!");
 
-        // client nodes init
-        RAIN_INFO("Init data_server client node...");
-        if (!ds_client_.init()) {
-            RAIN_ERROR("Init data_server client node error! Server start failed!");
+        RAIN_INFO("Init shared_server proxy...");
+        if (!SharedServerProxy::get_instance().init()) {
+            RAIN_ERROR("Init shared_server proxy error! Server start failed!");
             return;
         }
-        RAIN_INFO("Success!");
 
-        RAIN_INFO("Init shared_server client node...");
-        if (!ss_client_.init()) {
-            RAIN_ERROR("Init shared_server client node error! Server start failed!");
-            return;
-        }
-        RAIN_INFO("Success!");
+        // TODO: start logic main thread
 
-        // start all server
-        gw_server_.run();
-        ds_client_.run();
-        ss_client_.run();
-
-        // load lua scripts
-        // start logic main thread
+        RAIN_INFO("Server start success!");
     }
 
-    void do_stop()
+    void stop_all()
     {
     }
 
 private:
-    ConfigReader reader_;
-    GWServerType gw_server_;
-    DSClientType ds_client_;
-    SSClientType ss_client_;
 };
 
 } // !namespace rain

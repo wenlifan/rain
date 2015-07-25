@@ -1,39 +1,44 @@
 #pragma once
 
-#include <memory>
-
 #include "singleton.hpp"
-#include "session.hpp"
 #include "message_pack.hpp"
+#include "server_proxy.hpp"
 
 namespace rain
 {
 
-class GatewayProxy : public Singleton<GatewayProxy>
+class GatewayProxy
+    : public ServerProxy<GatewayProxy>
+    , public Singleton<GatewayProxy>
 {
     friend Singleton<GatewayProxy>;
     GatewayProxy() = default;
 
-    using SessionPtr = std::shared_ptr<Session<GatewayProxy>>;
-    using MessagePackPtr = std::shared_ptr<MessagePack>;
+public:
+    void add_session(TargetSessionPtr session)
+    {
+
+    }
+
+    void remove_session(TargetSessionPtr session)
+    {
+
+    }
+
+    void dispatch_message(TargetSessionPtr session, MessagePackPtr msgp)
+    {
+
+    }
 
 public:
-    void add_session(SessionPtr session)
+    bool init()
     {
-
+        return ServerProxy::init(
+            "Server.Gateway.PingInterval",
+            "Server.Gateway.BreakTimes",
+            "Server.Gateway.Port"
+        );
     }
-
-    void remove_session(SessionPtr session)
-    {
-
-    }
-
-    void dispatch_message(SessionPtr session, MessagePackPtr msgp)
-    {
-
-    }
-
-private:
 };
 
 } // !namespace rain

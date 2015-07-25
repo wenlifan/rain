@@ -12,4 +12,7 @@ add_custom_target(rain_shared SOURCES
     console.hpp
     config_reader.hpp
     lua_environment.hpp
+    basic_proxy.hpp
+    server_proxy.hpp
+    client_proxy.hpp
 )

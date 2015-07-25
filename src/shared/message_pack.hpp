@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <cstring>
 #include <cassert>
 #include <vector>
@@ -100,5 +101,7 @@ private:
     std::vector<char> data_;
     std::size_t readptr_ = 0;
 };
+
+using MessagePackPtr = std::shared_ptr<MessagePack>;
 
 } // !namespace rain

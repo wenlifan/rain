@@ -1,39 +1,45 @@
 #pragma once
 
-#include <memory>
-
 #include "singleton.hpp"
-#include "session.hpp"
 #include "message_pack.hpp"
+#include "client_proxy.hpp"
 
 namespace rain
 {
 
-class DataServerProxy : public Singleton<DataServerProxy>
+class DataServerProxy
+    : public ClientProxy<DataServerProxy>
+    , public Singleton<DataServerProxy>
 {
     friend Singleton<DataServerProxy>;
     DataServerProxy() = default;
 
-    using SessionPtr = std::shared_ptr<Session<DataServerProxy>>;
-    using MessagePackPtr = std::shared_ptr<MessagePack>;
+public:
+    void add_session(TargetSessionPtr session)
+    {
+
+    }
+
+    void remove_session(TargetSessionPtr session)
+    {
+
+    }
+
+    void dispatch_message(TargetSessionPtr session, MessagePackPtr msgp)
+    {
+
+    }
 
 public:
-    void add_session(SessionPtr session)
+    bool init()
     {
-
+        return ClientProxy::init(
+            "Client.DataServer.PingInterval",
+            "Client.DataServer.BreakTimes",
+            "Client.DataServer.IP",
+            "Client.DataServer.Port"
+        );
     }
-
-    void remove_session(SessionPtr session)
-    {
-
-    }
-
-    void dispatch_message(SessionPtr session, MessagePackPtr msgp)
-    {
-
-    }
-
-private:
 };
 
 } // !namespace rain

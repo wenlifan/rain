@@ -4,9 +4,9 @@
 #include <memory>
 #include <system_error>
 
-//#include <iostream>
-
 #include "asio.hpp"
+
+#include "console.hpp"
 
 namespace rain
 {
@@ -19,15 +19,16 @@ class ServerNode
     using IOService = asio::io_service;
     using IOServicePtr = std::shared_ptr<IOService>;
     using ThreadVector = std::vector<std::thread>;
+    using ErrorCallBack = std::function<void(std::error_code const &err)>;
 
 public:
-    ServerNode(unsigned short port = 59999) :
-            iosp_(std::make_shared<IOService>()),
-            acceptor_(*iosp_, tcp::endpoint(tcp::v4(), port))
+    ServerNode(std::size_t thread_count = 1)
+        : iosp_(std::make_shared<IOService>())
+        , work_keeper_(*iosp_)
+        , acceptor_(*iosp_)
     {
-        auto n = std::thread::hardware_concurrency();
-        //std::cout << "Threads: " << n << std::endl;
-        work_threads_.resize(n > 0 ? n : 2);
+        work_threads_.resize(thread_count);
+        run();
     }
 
     ServerNode(ServerNode &&) = default;
@@ -38,9 +39,46 @@ public:
     }
 
 public:
-    bool init()
+    void accept(std::string const &ip, unsigned short port, ErrorCallBack const &call_back)
     {
-        return true;
+        std::error_code err;
+        tcp::endpoint ep(asio::ip::address_v4::from_string(ip), port);
+        acceptor_.open(ep.protocol(), err);
+        if (err) {
+            RAIN_WARN("Acceptor open failed!");
+            call_back(err);
+            return;
+        }
+        acceptor_.bind(ep, err);
+        if (err) {
+            RAIN_WARN("Bind endpoint failed!");
+            call_back(err);
+            return;
+        }
+        acceptor_.listen(asio::socket_base::max_connections, err);
+        if (err) {
+            RAIN_WARN("Listen failed!");
+            call_back(err);
+            return;
+        }
+
+        do_accept(call_back);
+    }
+
+private:
+    void do_accept(ErrorCallBack const &call_back)
+    {
+        auto session = std::make_shared<Session>(iosp_);
+        acceptor_.async_accept(session->get_socket(),
+                               [this, session, call_back](std::error_code const &err) {
+                                   if (!err) {
+                                       session->start();
+                                       do_accept(call_back);
+                                   } else {
+                                       RAIN_WARN("Accept socket failed!");
+                                       call_back(err);
+                                   }
+                               });
     }
 
     void run()
@@ -48,37 +86,22 @@ public:
         for (auto &thread : work_threads_)
             if (!thread.joinable())
                 thread = std::thread([this]{iosp_->run();});
-
-        accept();
     }
 
-private:
     void stop()
     {
+        // TODO: safe stop (shutdown socket first)
         iosp_->stop();
         for (auto &thread : work_threads_)
             if (thread.joinable())
                 thread.join();
     }
 
-    void accept()
-    {
-        //std::cout << "Listen to " << acceptor_.local_endpoint() << std::endl;
-        auto session = std::make_shared<Session>(iosp_);
-        acceptor_.async_accept(session->get_socket(), [this, session](std::error_code const &err) {
-            if (!err) {
-                session->start();
-
-                accept();
-            }
-            //std::cout << "accept err: " << err.message() << std::endl;
-        });
-    }
-
 private:
     IOServicePtr iosp_;
-    tcp::acceptor acceptor_;
+    IOService::work work_keeper_;
     ThreadVector work_threads_;
+    tcp::acceptor acceptor_;
 };
 
 } // !namespace rain
