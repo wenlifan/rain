@@ -30,8 +30,6 @@ public:
             , socket_(*ptr)
             , timer_(*ptr)
     {
-        ping_interval_ = SessionManager::get_instance().get_ping_interval();
-        break_times_ = SessionManager::get_instance().get_break_times();
     }
 
     Session(Session const &) = delete;
@@ -44,11 +42,13 @@ public:
     void start()
     {
         socket_.set_option(tcp::no_delay(true));
+        auto &sm = SessionManager::get_instance();
 
-        SessionManager::get_instance().add_session(this->shared_from_this());
+        ping_interval_ = sm.get_ping_interval();
+        break_times_ = sm.get_break_times();
+        sm.add_session(this->shared_from_this());
 
         do_read(std::make_shared<MessagePack>(COMM_NONE), 0);
-
         do_ping();
     }
 

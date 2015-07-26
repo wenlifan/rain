@@ -14,12 +14,12 @@ template <typename Proxy>
 class ServerProxy
     : public BasicProxy
 {
+protected:
     using TargetSession = Session<Proxy>;
     using TargetSessionPtr = std::shared_ptr<TargetSession>;
-    using TargetServerNode = ServerNode<TargetSession>;
-    using TargetServerNodePtr = std::shared_ptr<TargetServerNode>;
+    using TargetNode = ServerNode<TargetSession>;
+    using TargetNodePtr = std::unique_ptr<TargetNode>;
 
-public:
     bool init(
         std::string const &ping_interval_str,
         std::string const &break_times_str,
@@ -38,7 +38,7 @@ private:
 
     bool init_node(std::string const &port_str)
     {
-        server_ = std::make_shared<TargetServerNode>();
+        node_ = std::make_unique<TargetNode>();
         auto &reader = ConfigReader::get_instance();
 
         int port;
@@ -49,7 +49,7 @@ private:
 
         RAIN_DEBUG("Listen port: " + std::to_string(port));
 
-        server_->accept(asio::ip::address().to_string(),
+        node_->accept(asio::ip::address().to_string(),
                         static_cast<unsigned short>(port),
                         std::bind(&ServerProxy::error_handler,
                                   this,
@@ -61,7 +61,7 @@ private:
     }
 
 private:
-    TargetServerNodePtr server_;
+    TargetNodePtr node_;
 };
 
 } // !namespace rain

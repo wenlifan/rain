@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <condition_variable>
 
 #include "basic_proxy.hpp"
 #include "session.hpp"
@@ -16,25 +17,13 @@ namespace rain
 template <typename Proxy>
 class ClientProxy
     : public BasicProxy
-    , public std::enable_shared_from_this<ClientProxy<Proxy>>
 {
+protected:
     using TargetSession = Session<Proxy>;
     using TargetSessionPtr = std::shared_ptr<TargetSession>;
-    using TargetClientNode = ClientNode<TargetSession>;
-    using TargetClientNodePtr = std::shared_ptr<TargetClientNode>;
+    using TargetNode = ClientNode<TargetSession>;
+    using TargetNodePtr = std::shared_ptr<TargetNode>;
 
-public:
-    ~ClientProxy()
-    {
-        RAIN_DEBUG("Come's here");
-        exit_ = true;
-        if (auto_conn_thread_.joinable())
-            auto_conn_thread_.join();
-
-        RAIN_DEBUG("Come's here, too");
-    }
-
-public:
     bool init(
         std::string const &ping_interval_str,
         std::string const &break_times_str,
@@ -42,8 +31,16 @@ public:
         std::string const &port_str
     )
     {
-        return init_params(ping_interval_str, break_times_str)
+        return init_reconn_thread()
+               && init_params(ping_interval_str, break_times_str)
                && init_node(ip_str, port_str);
+    }
+
+    void stop_reconn_thread()
+    {
+        exit_ = true;
+        if (conn_thread_.joinable())
+            conn_thread_.join();
     }
 
 private:
@@ -51,22 +48,35 @@ private:
     {
         RAIN_DEBUG("Proxy client node error: " + err.message());
 
-        if (!exit_)
-        {
-            if (auto_conn_thread_.joinable())
-                auto_conn_thread_.join();
+        conn_mutex_.lock();
+        reconn_ = true;
+        conn_mutex_.unlock();
+        conn_var_.notify_one();
+    }
 
-            auto self = this->shared_from_this();
-            auto_conn_thread_ = std::thread([this, self] {
-                std::this_thread::sleep_for(std::chrono::milliseconds(ping_interval_));
-                do_connect();
+    bool init_reconn_thread()
+    {
+        if (!conn_thread_.joinable()) {
+            conn_thread_ = std::thread([this] {
+                std::unique_lock<std::mutex> ulk(conn_mutex_);
+                for (;;) {
+                    conn_var_.wait(ulk, [this]{return reconn_;});
+                    if (exit_)
+                        break;
+
+                    reconn_ = false;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                    do_connect();
+                }
             });
+            return true;
         }
+        return false;
     }
 
     bool init_node(std::string const &ip_str, std::string const &port_str)
     {
-        client_ = std::make_shared<TargetClientNode>();
+        node_ = std::make_shared<TargetNode>();
         auto &reader = ConfigReader::get_instance();
 
         int port;
@@ -89,19 +99,25 @@ private:
 
     void do_connect()
     {
-        client_->connect(ip_,
-                         port_,
-                         std::bind(&ClientProxy::error_handler,
-                                   this,
-                                   std::placeholders::_1
-                         )
+        node_->connect(ip_,
+                       port_,
+                       std::bind(&ClientProxy::error_handler,
+                                 this,
+                                 std::placeholders::_1
+                       )
         );
     }
 
 private:
-    TargetClientNodePtr client_;
-    std::thread auto_conn_thread_;
+    TargetNodePtr node_;
+
     std::atomic_bool exit_{false};
+
+    std::thread conn_thread_;
+    std::mutex conn_mutex_;
+    std::condition_variable conn_var_;
+    bool reconn_{false};
+
     std::string ip_;
     unsigned short port_;
 };

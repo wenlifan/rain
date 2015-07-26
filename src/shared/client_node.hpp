@@ -26,8 +26,6 @@ public:
         run();
     }
 
-    ClientNode(ClientNode &&) = default;
-
     ~ClientNode()
     {
         stop();
@@ -59,7 +57,6 @@ private:
 
     void stop()
     {
-        // TODO: safe stop (shutdown socket first)
         iosp_->stop();
         if (work_thread_.joinable())
             work_thread_.join();

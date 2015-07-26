@@ -8,15 +8,11 @@ namespace rain
 {
 
 class SharedServerProxy
-    : public Singleton<SharedServerProxy>
+    : public ClientProxy<SharedServerProxy>
+    , public Singleton<SharedServerProxy>
 {
     friend Singleton<SharedServerProxy>;
     SharedServerProxy() = default;
-
-    using TargetSession = Session<SharedServerProxy>;
-    using TargetSessionPtr = std::shared_ptr<TargetSession>;
-    using Proxy = ClientProxy<SharedServerProxy>;
-    using ProxyPtr = std::shared_ptr<Proxy>;
 
 public:
     void add_session(TargetSessionPtr session)
@@ -34,21 +30,10 @@ public:
 
     }
 
-    std::size_t get_ping_interval() const
-    {
-        return proxy_->get_ping_interval();
-    }
-
-    std::size_t get_break_times() const
-    {
-        return proxy_->get_break_times();
-    }
-
 public:
     bool init()
     {
-        proxy_ = std::make_unique<Proxy>();
-        return proxy_->init(
+        return ClientProxy::init(
             "Client.SharedServer.PingInterval",
             "Client.SharedServer.BreakTimes",
             "Client.SharedServer.IP",
@@ -58,11 +43,10 @@ public:
 
     void stop()
     {
-        proxy_.reset();
+        stop_reconn_thread();
     }
 
 private:
-    ProxyPtr proxy_;
 };
 
 } // !namespace rain

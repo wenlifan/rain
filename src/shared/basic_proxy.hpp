@@ -42,7 +42,7 @@ protected:
         return true;
     }
 
-protected:
+private:
     std::size_t ping_interval_;
     std::size_t break_times_;
 };
