@@ -31,7 +31,13 @@ public:
 
         console.run();
 
-        stop_all();
+        try {
+            stop_all();
+        } catch (std::exception &err) {
+            RAIN_ERROR(std::string("Stop server occurs Exception: ") + err.what());
+        } catch (...) {
+            RAIN_ERROR("Note: Stop server occurs [Unknown] Exception.");
+        }
     }
 
 private:
@@ -43,9 +49,9 @@ private:
             return;
         }
 
-        RAIN_INFO("Init gateway_server proxy...");
-        if (!GatewayServerProxy::get_instance().init()) {
-            RAIN_ERROR("Init gateway_server proxy error! Server start failed!");
+        RAIN_INFO("Init data_server proxy...");
+        if (!DataServerProxy::get_instance().init()) {
+            RAIN_ERROR("Init data_server proxy error! Server start failed!");
             return;
         }
 
@@ -55,9 +61,9 @@ private:
             return;
         }
 
-        RAIN_INFO("Init data_server proxy...");
-        if (!DataServerProxy::get_instance().init()) {
-            RAIN_ERROR("Init data_server proxy error! Server start failed!");
+        RAIN_INFO("Init gateway_server proxy...");
+        if (!GatewayServerProxy::get_instance().init()) {
+            RAIN_ERROR("Init gateway_server proxy error! Server start failed!");
             return;
         }
 

@@ -66,17 +66,21 @@ public:
 private:
     void do_accept(ErrorCallBack const &call_back)
     {
-        auto session = std::make_shared<Session>(iosp_);
-        acceptor_.async_accept(session->get_socket(),
-                               [this, session, call_back](std::error_code const &err) {
-                                   if (!err) {
-                                       session->start();
-                                       do_accept(call_back);
-                                   } else {
-                                       RAIN_WARN("Accept socket failed!");
-                                       call_back(err);
-                                   }
-                               });
+        for (std::size_t i = 0; i < work_threads_.size(); i++) {
+            auto session = std::make_shared<Session>(iosp_);
+            acceptor_.async_accept(
+                session->get_socket(),
+                [this, session, call_back](std::error_code const &err) {
+                    if (!err) {
+                        session->start();
+                        do_accept(call_back);
+                    } else {
+                        RAIN_WARN("Accept socket failed!");
+                        call_back(err);
+                    }
+                }
+            );
+        }
     }
 
     void run()

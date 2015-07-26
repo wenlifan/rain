@@ -25,6 +25,16 @@ public:
 
     }
 
+    void session_read_eof(TargetSessionPtr session)
+    {
+
+    }
+
+    void send_message_finished(TargetSessionPtr, MessagePackPtr msgp)
+    {
+
+    }
+
     void dispatch_message(TargetSessionPtr session, MessagePackPtr msgp)
     {
 

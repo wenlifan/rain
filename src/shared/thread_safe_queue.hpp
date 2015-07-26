@@ -14,31 +14,43 @@ template <typename T>
 class ThreadSafeQueue
 {
 public:
-    void push(T ptr)
+    void push(T t)
     {
         std::lock_guard<std::mutex> guard(mutex_);
-        lists_.push_back(std::move(ptr));
+        list_.push_back(std::move(t));
+    }
+
+    void erase(T t)
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        list_.remove(t);
     }
 
     T pop()
     {
         std::lock_guard<std::mutex> guard(mutex_);
-        auto ptr = lists_.front();
-        lists_.pop_front();
-        return ptr;
+        auto front = list_.front();
+        list_.pop_front();
+        return front;
     }
 
     std::list<T> pop_all()
     {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (lists_.empty())
+        if (list_.empty())
             return std::list<T>();
         else
-            return std::move(lists_);
+            return std::move(list_);
+    }
+
+    bool empty()
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        return list_.empty();
     }
 
 private:
-    std::list<T> lists_;
+    std::list<T> list_;
     std::mutex mutex_;
 };
 

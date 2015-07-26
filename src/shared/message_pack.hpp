@@ -71,11 +71,15 @@ public:
 
     void write_size(char const *data, std::size_t size)
     {
-        data_.resize(data_.size() + size);
-        std::memcpy(data_.data() + data_.size() - size, data, size);
-
+        raw_write_size(data, size);
         auto s = std::uint32_t(data_.size() - HeaderSize);
         std::memcpy(data_.data(), &s, 4);
+    }
+
+    void raw_write_size(char const *data, std::size_t size)
+    {
+        data_.resize(data_.size() + size);
+        std::memcpy(data_.data() + data_.size() - size, data, size);
     }
 
     template <typename T>
