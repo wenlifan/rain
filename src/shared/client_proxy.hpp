@@ -32,6 +32,7 @@ protected:
     )
     {
         run_flag_.test_and_set();
+        conn_flag_.test_and_set();
         return init_reconn_thread()
                && init_params(ping_interval_str, break_times_str)
                && init_node(ip_str, port_str);
@@ -51,8 +52,8 @@ protected:
     void stop_reconn_thread()
     {
         run_flag_.clear();
-        if (reconn_thread_.joinable())
-            reconn_thread_.join();
+        if (conn_thread_.joinable())
+            conn_thread_.join();
     }
 
 private:
@@ -60,20 +61,23 @@ private:
     {
         RAIN_DEBUG("Proxy client node error: " + err.message());
 
-        reconn_flag_.clear();
+        conn_flag_.clear();
     }
 
     bool init_reconn_thread()
     {
-        if (!reconn_thread_.joinable()) {
-            reconn_thread_ = std::thread([this] {
+        if (!conn_thread_.joinable()) {
+            conn_thread_ = std::thread([this] {
                 for (;;) {
-                    if (!run_flag_.test_and_set())
+                    if (!run_flag_.test_and_set()) {
                         break;
+                    }
 
                     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-                    if (!reconn_flag_.test_and_set())
+                    if (!conn_flag_.test_and_set()) {
+                        RAIN_DEBUG("RECONNECT TO SERVER");
                         connect();
+                    }
                 }
             });
             return true;
@@ -110,9 +114,9 @@ private:
     TargetNodePtr node_;
 
     std::atomic_flag run_flag_{ATOMIC_FLAG_INIT};
-    std::atomic_flag reconn_flag_{ATOMIC_FLAG_INIT};
+    std::atomic_flag conn_flag_{ATOMIC_FLAG_INIT};
 
-    std::thread reconn_thread_;
+    std::thread conn_thread_;
 
     std::string ip_;
     unsigned short port_;

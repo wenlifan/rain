@@ -25,7 +25,7 @@ public:
         lua_close(state_);
     }
 
-    bool load_config(std::string fname)
+    bool load_config(std::string const &fname)
     {
         if (luaL_dofile(state_, fname.c_str())) {
             RAIN_ERROR("Read file <" + fname + "> occurs error: " + lua_tostring(state_, -1));
@@ -35,7 +35,7 @@ public:
         return true;
     }
 
-    bool read_int(int &i, std::string str)
+    bool read_int(int &i, std::string const &str)
     {
         if (luaL_dostring(state_, ("_read_value_ = " + str).c_str())) {
             RAIN_ERROR("Read int <" + str + "> occurs error: " + lua_tostring(state_, -1));
@@ -55,7 +55,7 @@ public:
         return true;
     }
 
-    bool read_double(double &d, std::string str)
+    bool read_double(double &d, std::string const &str)
     {
         if (luaL_dostring(state_, ("_read_value_ = " + str).c_str())) {
             RAIN_ERROR("Read double <" + str + "> occurs error: " + lua_tostring(state_, -1));
@@ -75,7 +75,7 @@ public:
         return true;
     }
 
-    bool read_string(std::string &str, std::string field_name)
+    bool read_string(std::string &str, std::string const &field_name)
     {
         if (luaL_dostring(state_, ("_read_value_ = " + field_name).c_str())) {
             RAIN_ERROR("Read string <" + field_name + "> occurs error: " + lua_tostring(state_, -1));
