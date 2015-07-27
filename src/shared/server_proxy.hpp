@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "basic_proxy.hpp"
 #include "session.hpp"
