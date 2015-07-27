@@ -23,7 +23,7 @@ public:
             "AccountServer",
             "account_server_config.lua",
             {
-                "login_server",
+                "LoginServer",
             }
         );
     }

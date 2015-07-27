@@ -25,8 +25,8 @@ public:
             "LoginServer",
             "login_server_config.lua",
             {
-                "account_server",
-                "gateway_server"
+                "AccountServer",
+                "GatewayServer"
             }
         );
     }

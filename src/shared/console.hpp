@@ -178,7 +178,6 @@ private:
     {
         auto key = ConsoleKey::Unknown;
         auto n = read(0, read_buf_.data(), read_buf_.size());
-        //std::printf("get %ld char\r\n", n);
         if (n == 1) {
             auto c = read_buf_[0];
             if (c == 10)
@@ -288,9 +287,9 @@ private:
             clear_screen();
             flush_status_line();
             return false;
+        } else {
+            commands_.push(history_.back());
         }
-
-        commands_.push(history_.back());
 
         flush_status_line();
         return false;

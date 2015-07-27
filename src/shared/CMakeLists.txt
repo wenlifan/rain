@@ -16,4 +16,6 @@ add_custom_target(rain_shared SOURCES
     server_proxy.hpp
     client_proxy.hpp
     common_app.hpp
+    local_client_proxy.hpp
+    local_server_proxy.hpp
 )

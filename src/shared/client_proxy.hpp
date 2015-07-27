@@ -24,6 +24,8 @@ protected:
     using TargetNode = ClientNode<TargetSession>;
     using TargetNodePtr = std::shared_ptr<TargetNode>;
 
+    ClientProxy() = default;
+
     bool init(
         std::string const &ping_interval_str,
         std::string const &break_times_str,
@@ -75,7 +77,6 @@ private:
 
                     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
                     if (!conn_flag_.test_and_set()) {
-                        RAIN_DEBUG("RECONNECT TO SERVER");
                         connect();
                     }
                 }

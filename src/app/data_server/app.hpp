@@ -25,8 +25,8 @@ public:
             "DataServer",
             "data_server_config.lua",
             {
-                "game_server",
-                "shared_server"
+                "GameServer",
+                "SharedServer"
             }
         );
     }

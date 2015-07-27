@@ -25,8 +25,8 @@ public:
             "GatewayServer",
             "gateway_server_config.lua",
             {
-                "game_server",
-                "login_server",
+                "GameServer",
+                "LoginServer",
             }
         );
     }

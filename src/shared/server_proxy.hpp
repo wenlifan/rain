@@ -21,6 +21,8 @@ protected:
     using TargetNode = ServerNode<TargetSession>;
     using TargetNodePtr = std::unique_ptr<TargetNode>;
 
+    ServerProxy() = default;
+
     bool init(
         std::string const &ping_interval_str,
         std::string const &break_times_str,
