@@ -3,6 +3,7 @@
 #include <system_error>
 #include <memory>
 #include <thread>
+#include <sstream>
 
 #include "asio.hpp"
 
@@ -42,7 +43,9 @@ public:
                 if (!err) {
                     session->start();
                 } else {
-                    RAIN_WARN("Connect to server " + ip + ':' + std::to_string(port) + " failed.");
+                    std::stringstream ss;
+                    ss << port;
+                    RAIN_WARN("Connect to server " + ip + ':' + ss.str() + " failed.");
                     call_back(err);
                 }
             });

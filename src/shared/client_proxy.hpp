@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <sstream>
 
 #include "basic_proxy.hpp"
 #include "session.hpp"
@@ -96,7 +97,9 @@ private:
         }
         port_ = static_cast<unsigned short>(port);
 
-        RAIN_DEBUG("Connect to server: " + ip_ + ':' + std::to_string(port_));
+        std::stringstream ss;
+        ss << port_;
+        RAIN_DEBUG("Connect to server: " + ip_ + ':' + ss.str());
 
         connect();
 

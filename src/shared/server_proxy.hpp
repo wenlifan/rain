@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <string>
+#include <sstream>
 
 #include "basic_proxy.hpp"
 #include "session.hpp"
@@ -48,7 +48,9 @@ private:
             return false;
         }
 
-        RAIN_DEBUG("Listen port: " + std::to_string(port));
+        std::stringstream ss;
+        ss << port;
+        RAIN_DEBUG("Listen port: " + ss.str());
 
         node_->accept(asio::ip::address().to_string(),
                         static_cast<unsigned short>(port),
