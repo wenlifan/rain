@@ -1,13 +1,8 @@
+#include "filesystem.hpp"
+#include "app.hpp"
 
-int main(void)
+int main(int, char *argv[])
 {
-//    auto client = rain::ClientNode<rain::Session<rain::ServerSessionManager>>();
-//
-//    client.connect("127.0.0.1", 5000);
-//
-//    std::cout << "Connect to Server..." << std::endl;
-//
-//    std::this_thread::sleep_for(std::chrono::milliseconds(99999999));
-
-    //std::cout << "Hello, World!\n";
+    rain::reset_work_dir(argv[0]);
+    rain::App::get_instance().run();
 }

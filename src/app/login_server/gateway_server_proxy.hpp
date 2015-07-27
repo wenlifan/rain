@@ -1,18 +1,14 @@
 #pragma once
 
-#include <string>
-#include <atomic>
-
 #include "singleton.hpp"
 #include "message_pack.hpp"
-#include "server_proxy.hpp"
-#include "thread_safe_queue.hpp"
+#include "client_proxy.hpp"
 
 namespace rain
 {
 
 class GatewayServerProxy
-    : public ServerProxy<GatewayServerProxy>
+    : public ClientProxy<GatewayServerProxy>
     , public Singleton<GatewayServerProxy>
 {
     friend Singleton<GatewayServerProxy>;
@@ -21,22 +17,19 @@ class GatewayServerProxy
 public:
     void add_session(TargetSessionPtr session)
     {
-        auto ip = session->get_socket().remote_endpoint().address().to_string();
-        if (ip != accept_id_) {
-            RAIN_WARN("Illegal access to server, ip: " + ip);
-            return;
-        }
-
         session_ = session;
         auto msgs = unsent_msg_.pop_all();
         for (auto &i : msgs) {
             send_message(i);
         }
+        RAIN_INFO("Connected to gateway_server");
     }
 
     void remove_session(TargetSessionPtr)
     {
+        RAIN_WARN("Disconnect from gateway_server, reconnect...");
         session_.reset();
+        connect();
     }
 
     void send_message(MessagePackPtr msgp)
@@ -58,17 +51,17 @@ public:
 public:
     bool init()
     {
-        return init_accept_ip() && ServerProxy::init(
-            "Server.GatewayServer.PingInterval",
-            "Server.GatewayServer.BreakTimes",
-            "Server.GatewayServer.Port"
+        return ClientProxy::init(
+            "Client.GatewayServer.PingInterval",
+            "Client.GatewayServer.BreakTimes",
+            "Client.GatewayServer.IP",
+            "Client.GatewayServer.Port"
         );
     }
 
     void stop()
     {
-        if (session_ != nullptr)
-            session_->remove();
+        stop_reconn_thread();
     }
 
     bool status() const
@@ -77,20 +70,8 @@ public:
     }
 
 private:
-    bool init_accept_ip()
-    {
-        auto &reader = ConfigReader::get_instance();
-        if (!reader.read_string(accept_id_, "Server.GatewayServer.AcceptIP")) {
-            RAIN_ERROR("Read Server.GatewayServer.AcceptIP failed");
-            return false;
-        }
-        return true;
-    }
-
-private:
     TargetSessionPtr session_;
     ThreadSafeQueue<MessagePackPtr> unsent_msg_;
-    std::string accept_id_;
 };
 
 } // !namespace rain

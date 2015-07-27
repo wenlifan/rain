@@ -2,10 +2,10 @@
 
 #include <memory>
 #include <system_error>
-#include <unordered_set>
 #include <array>
 #include <cstring>
 #include <atomic>
+#include <cstdint>
 
 #include "asio.hpp"
 
@@ -23,13 +23,6 @@ class Session
 {
     using IOService = asio::io_service;
     using IOServicePtr = std::shared_ptr<IOService>;
-
-    enum ShutdownType : char {
-        ST_None        = 0,
-        ST_Read        = 1,
-        ST_Write       = 2,
-        ST_Both        = 3,
-    };
 
 public:
     Session(IOServicePtr ptr)
@@ -64,21 +57,12 @@ public:
         do_write(msgp, 0);
     }
 
-    void shutdown(tcp::socket::shutdown_type type)
+    void remove()
     {
-        std::error_code err;
-
-        if (type == tcp::socket::shutdown_send) {
-            shutdown_type_ |= ST_Write;
-        } else if (type == tcp::socket::shutdown_receive) {
-            shutdown_type_ |= ST_Read;
-        } else if (type == tcp::socket::shutdown_both) {
-            shutdown_type_ |= ST_Both;
-        }
-
-        socket_.shutdown(type, err);
-        if (err) {
-            RAIN_ERROR("Socket shutdown error: " + err.message());
+        if (!remove_flag_.test_and_set()) {
+            ping_times_ = 10000;
+            SessionMgr::get_instance().remove_session(this->shared_from_this());
+            socket_.close();
         }
     }
 
@@ -103,12 +87,18 @@ private:
             auto ws = hs + msgp->data_size() - offset;
             msgp->raw_write_size(read_buf_.data() + buf_offset, ws);
 
-            if (msgp->protocol() == COMM_PONG) {
-                ping_times_ = 0;
-                //std::cout << "Recieved PONG!" << std::endl;
-            } else if (msgp->protocol() == COMM_PING) {
+            if (msgp->protocol() == COMM_PING) {
                 do_pong();
-                //std::cout << "Recieved PING!" << std::endl;
+            } else if (msgp->protocol() == COMM_PONG) {
+                ping_times_ = 0;
+            } else if (msgp->protocol() == COMM_FEEDBACK_WRAPPER) {
+                msgp->read_ptr(hs);
+                do_feedback(msgp->read<std::uint32_t>());
+                auto nmsgp = std::make_shared<MessagePack>(COMM_NONE);
+                std::memcpy(nmsgp->data(), msgp->data() + msgp->read_ptr(), hs);
+                msgp->read_ptr(hs);
+                nmsgp->write_size(msgp->data() + msgp->read_ptr(), msgp->avail());
+                SessionMgr::get_instance().dispatch_message(this->shared_from_this(), nmsgp);
             } else {
                 SessionMgr::get_instance().dispatch_message(this->shared_from_this(), msgp);
             }
@@ -126,12 +116,9 @@ private:
             [this, self, msgp, offset](std::error_code const &err, std::size_t bytes) {
                 if (!err) {
                     divide_message_pack(msgp, offset, 0, bytes);
-                } else if (err == asio::error::eof) {
-                    shutdown_type_ |= ST_Read;
-                    SessionMgr::get_instance().session_read_eof(self);
-                } else if (!(shutdown_type_ & ST_Read)) {
+                } else {
                     RAIN_DEBUG("Session read data failed: " + err.message());
-                    do_remove_session();
+                    remove();
                 }
             });
     }
@@ -148,9 +135,9 @@ private:
                     } else {
                         SessionMgr::get_instance().send_message_finished(self, msgp);
                     }
-                } else if (!(shutdown_type_ & ST_Write)) {
+                } else {
                     RAIN_DEBUG("Session write data failed: " + err.message());
-                    do_remove_session();
+                    remove();
                 }
             }
         );
@@ -159,16 +146,13 @@ private:
     void do_ping()
     {
         if (ping_times_ >= break_times_) {
-            do_remove_session();
+            remove();
             return;
         }
 
         auto self = this->shared_from_this();
         timer_.expires_from_now(std::chrono::milliseconds(ping_interval_));
         timer_.async_wait([this, self] (std::error_code const &err) {
-            if (shutdown_type_ != ST_None)
-                return;
-
             if (!err) {
                 write(std::make_shared<MessagePack>(COMM_PING));
                 do_ping();
@@ -184,13 +168,11 @@ private:
         write(std::make_shared<MessagePack>(COMM_PONG));
     }
 
-    void do_remove_session()
+    void do_feedback(std::int32_t id)
     {
-        if (!remove_flag_) {
-            SessionMgr::get_instance().remove_session(this->shared_from_this());
-            remove_flag_ = true;
-            ping_times_ = 10000;
-        }
+        auto msgp = std::make_shared<MessagePack>(COMM_FEEDBACK);
+        msgp->write(id);
+        write(msgp);
     }
 
 private:
@@ -200,8 +182,7 @@ private:
 
     std::array<char, 1024> read_buf_;
 
-    std::atomic_char shutdown_type_{ST_None};
-    std::atomic_bool remove_flag_{false};
+    std::atomic_flag remove_flag_{ATOMIC_FLAG_INIT};
     std::atomic_size_t ping_times_{0};
 
     std::size_t ping_interval_; // ms

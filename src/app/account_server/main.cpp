@@ -1,6 +1,8 @@
-#include <iostream>
+#include "filesystem.hpp"
+#include "app.hpp"
 
-int main(void)
+int main(int, char *argv[])
 {
-    std::cout << "Hello, World!\n";
+    rain::reset_work_dir(argv[0]);
+    rain::App::get_instance().run();
 }

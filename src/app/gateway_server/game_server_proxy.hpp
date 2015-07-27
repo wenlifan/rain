@@ -7,12 +7,12 @@
 namespace rain
 {
 
-class SharedServerProxy
-    : public ClientProxy<SharedServerProxy>
-    , public Singleton<SharedServerProxy>
+class GameServerProxy
+    : public ClientProxy<GameServerProxy>
+    , public Singleton<GameServerProxy>
 {
-    friend Singleton<SharedServerProxy>;
-    SharedServerProxy() = default;
+    friend Singleton<GameServerProxy>;
+    GameServerProxy() = default;
 
 public:
     void add_session(TargetSessionPtr session)
@@ -22,12 +22,12 @@ public:
         for (auto &i : msgs) {
             send_message(i);
         }
-        RAIN_INFO("Connected to shared_server");
+        RAIN_INFO("Connected to game_server");
     }
 
     void remove_session(TargetSessionPtr)
     {
-        RAIN_WARN("Disconnect from shared_serser, reconnect...");
+        RAIN_WARN("Disconnect from game_server, reconnect...");
         session_.reset();
         connect();
     }
@@ -52,10 +52,10 @@ public:
     bool init()
     {
         return ClientProxy::init(
-            "Client.SharedServer.PingInterval",
-            "Client.SharedServer.BreakTimes",
-            "Client.SharedServer.IP",
-            "Client.SharedServer.Port"
+            "Client.GameServer.PingInterval",
+            "Client.GameServer.BreakTimes",
+            "Client.GameServer.IP",
+            "Client.GameServer.Port"
         );
     }
 

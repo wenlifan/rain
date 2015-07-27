@@ -11,12 +11,12 @@
 namespace rain
 {
 
-class GatewayServerProxy
-    : public ServerProxy<GatewayServerProxy>
-    , public Singleton<GatewayServerProxy>
+class SharedServerProxy
+    : public ServerProxy<SharedServerProxy>
+    , public Singleton<SharedServerProxy>
 {
-    friend Singleton<GatewayServerProxy>;
-    GatewayServerProxy() = default;
+    friend Singleton<SharedServerProxy>;
+    SharedServerProxy() = default;
 
 public:
     void add_session(TargetSessionPtr session)
@@ -59,9 +59,9 @@ public:
     bool init()
     {
         return init_accept_ip() && ServerProxy::init(
-            "Server.GatewayServer.PingInterval",
-            "Server.GatewayServer.BreakTimes",
-            "Server.GatewayServer.Port"
+            "Server.SharedServer.PingInterval",
+            "Server.SharedServer.BreakTimes",
+            "Server.SharedServer.Port"
         );
     }
 
@@ -80,8 +80,8 @@ private:
     bool init_accept_ip()
     {
         auto &reader = ConfigReader::get_instance();
-        if (!reader.read_string(accept_id_, "Server.GatewayServer.AcceptIP")) {
-            RAIN_ERROR("Read Server.GatewayServer.AcceptIP failed");
+        if (!reader.read_string(accept_id_, "Server.SharedServer.AcceptIP")) {
+            RAIN_ERROR("Read Server.SharedServer.AcceptIP failed");
             return false;
         }
         return true;

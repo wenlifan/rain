@@ -18,8 +18,8 @@ public:
     enum { HeaderSize = 6 };
 
 public:
-    MessagePack(Protocol proto, std::size_t init_size = 0)
-            : data_(init_size + HeaderSize)
+    MessagePack(Protocol proto)
+            : data_(HeaderSize)
     {
         auto s = std::uint32_t(0);
         std::memcpy(data_.data(), &s, 4);
@@ -47,7 +47,7 @@ public:
 
     std::size_t avail() const
     {
-        return data_.size() - readptr_;
+        return data_.size() - read_ptr_;
     }
 
     Protocol protocol() const
@@ -97,13 +97,23 @@ public:
 
     void read_size(char *data, std::size_t size)
     {
-        std::memcpy(data, data_.data() + readptr_, size);
-        readptr_ += size;
+        std::memcpy(data, data_.data() + read_ptr_, size);
+        read_ptr_ += size;
+    }
+
+    void read_ptr(int n)
+    {
+        read_ptr_ += n;
+    }
+
+    std::size_t read_ptr()
+    {
+        return read_ptr_;
     }
 
 private:
     std::vector<char> data_;
-    std::size_t readptr_ = 0;
+    std::size_t read_ptr_ = 0;
 };
 
 using MessagePackPtr = std::shared_ptr<MessagePack>;
