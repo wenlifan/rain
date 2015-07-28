@@ -14,7 +14,7 @@ class DataServerProxy
     DataServerProxy() = default;
 
 public:
-    void dispatch_message(TargetSessionPtr session, MessagePackPtr msgp)
+    void dispatch_message(TargetSessionPtr, MessagePackPtr msgp)
     {
 
     }

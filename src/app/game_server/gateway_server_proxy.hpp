@@ -2,6 +2,7 @@
 
 #include "singleton.hpp"
 #include "local_server_proxy.hpp"
+#include "message_dispatcher.hpp"
 
 namespace rain
 {
@@ -14,9 +15,9 @@ class GatewayServerProxy
     GatewayServerProxy() = default;
 
 public:
-    void dispatch_message(TargetSessionPtr session, MessagePackPtr msgp)
+    void dispatch_message(TargetSessionPtr, MessagePackPtr msgp)
     {
-
+        MessageDispatcher::get_instance().dispatch(msgp);
     }
 
     bool init()

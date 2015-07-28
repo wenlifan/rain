@@ -6,6 +6,9 @@ set(HEADER_FILES
     gateway_server_proxy.hpp
     data_server_proxy.hpp
     shared_server_proxy.hpp
+    command_processor.hpp
+    logic_system.hpp
+    message_dispatcher.hpp
 )
 
 add_executable(game_server ${SOURCE_FILES} ${HEADER_FILES})

@@ -83,7 +83,8 @@ private:
     {
         reset_term();
         exit_time_thread_ = true;
-        time_thread_.join();
+        if (time_thread_.joinable())
+            time_thread_.join();
     }
 public:
 
