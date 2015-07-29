@@ -9,7 +9,7 @@
 namespace rain
 {
 
-template <typename Proxy>
+template <typename Proxy, typename LogicSys>
 class LocalServerProxy
     : public ServerProxy<Proxy>
 {
@@ -50,6 +50,11 @@ public:
     void send_message_finished(TargetSessionPtr, MessagePackPtr msgp)
     {
         unsent_msg_.erase(msgp);
+    }
+
+    void dispatch_message(TargetSessionPtr, MessagePackPtr msgp)
+    {
+        LogicSys::get_instance().dispatch(msgp);
     }
 
     void stop()

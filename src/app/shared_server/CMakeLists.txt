@@ -5,6 +5,7 @@ set(HEADER_FILES
     app.hpp
     data_server_proxy.hpp
     game_server_proxy.hpp
+    logic_system.hpp
 )
 
 add_executable(shared_server ${SOURCE_FILES} ${HEADER_FILES})

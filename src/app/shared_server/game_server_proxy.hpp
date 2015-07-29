@@ -2,23 +2,19 @@
 
 #include "singleton.hpp"
 #include "local_server_proxy.hpp"
+#include "logic_system.hpp"
 
 namespace rain
 {
 
 class GameServerProxy
-    : public LocalServerProxy<GameServerProxy>
+    : public LocalServerProxy<GameServerProxy, LogicSystem>
         , public Singleton<GameServerProxy>
 {
     friend Singleton<GameServerProxy>;
     GameServerProxy() = default;
 
 public:
-    void dispatch_message(TargetSessionPtr session, MessagePackPtr msgp)
-    {
-
-    }
-
     bool init()
     {
         return LocalServerProxy::init("GameServer");

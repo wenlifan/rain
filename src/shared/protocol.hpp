@@ -14,6 +14,7 @@ enum Protocol : std::uint16_t
     COMM_PONG,
     COMM_FEEDBACK_WRAPPER,  // pack: header + feedback_id(4 bytes) + other_protocal
     COMM_FEEDBACK,
+    COMM_LUAMSG,
     COMM_END,
 
     // client to login_server

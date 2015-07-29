@@ -2,23 +2,19 @@
 
 #include "singleton.hpp"
 #include "local_client_proxy.hpp"
+#include "logic_system.hpp"
 
 namespace rain
 {
 
 class DataServerProxy
-    : public LocalClientProxy<DataServerProxy>
+    : public LocalClientProxy<DataServerProxy, LogicSystem>
     , public Singleton<DataServerProxy>
 {
     friend Singleton<DataServerProxy>;
     DataServerProxy() = default;
 
 public:
-    void dispatch_message(TargetSessionPtr, MessagePackPtr msgp)
-    {
-
-    }
-
     bool init()
     {
         return LocalClientProxy::init("DataServer");
