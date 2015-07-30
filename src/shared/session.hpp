@@ -67,44 +67,32 @@ public:
     }
 
 private:
-    void divide_message_pack(MessagePackPtr msgp,
-                             std::size_t offset,
-                             std::size_t buf_offset,
-                             std::size_t bytes)
+    void do_divide_pack(MessagePackPtr msgp,
+                        std::size_t offset,
+                        std::size_t buf_offset,
+                        std::size_t bytes)
     {
-        constexpr auto hs = MessagePack::HeaderSize;
+        constexpr auto hs = sizeof(MessageHeader);
         if (offset + bytes < hs) {
-            std::memcpy(msgp->data() + offset, read_buf_.data() + buf_offset, bytes);
+            msgp->pos_write_size(offset, read_buf_.data() + buf_offset, bytes);
             do_read(msgp, offset + bytes);
         } else if (offset < hs) {
             auto ws = hs - offset;
-            std::memcpy(msgp->data() + offset, read_buf_.data() + buf_offset, ws);
-            divide_message_pack(msgp, hs, buf_offset + ws, bytes - ws);
-        } else if (offset + bytes < hs + msgp->data_size()) {
-            msgp->raw_write_size(read_buf_.data() + buf_offset, bytes);
+            msgp->pos_write_size(offset, read_buf_.data() + buf_offset, ws);
+            if (msgp->pack_size() > 1024 * 1024 * 256) {
+                remove();
+                return;
+            }
+            do_divide_pack(msgp, hs, buf_offset + ws, bytes - ws);
+        } else if (offset + bytes < msgp->pack_size()) {
+            if (msgp->pack_size() > 1024 * 1024 * 256) {
+                remove();
+                return;
+            }
+            msgp->write_size(read_buf_.data() + buf_offset, bytes);
             do_read(msgp, offset + bytes);
         } else {
-            auto ws = hs + msgp->data_size() - offset;
-            msgp->raw_write_size(read_buf_.data() + buf_offset, ws);
-
-            if (msgp->protocol() == COMM_PING) {
-                do_pong();
-            } else if (msgp->protocol() == COMM_PONG) {
-                ping_times_ = 0;
-            } else if (msgp->protocol() == COMM_FEEDBACK_WRAPPER) {
-                msgp->read_ptr(hs);
-                do_feedback(msgp->read<std::uint32_t>());
-                auto nmsgp = std::make_shared<MessagePack>(COMM_NONE);
-                std::memcpy(nmsgp->data(), msgp->data() + msgp->read_ptr(), hs);
-                msgp->read_ptr(hs);
-                nmsgp->write_size(msgp->data() + msgp->read_ptr(), msgp->avail());
-                SessionMgr::get_instance().dispatch_message(this->shared_from_this(), nmsgp);
-            } else {
-                SessionMgr::get_instance().dispatch_message(this->shared_from_this(), msgp);
-            }
-            //std::cout << "Package Data Size: " << msgp->data_size() << std::endl;
-
-            divide_message_pack(std::make_shared<MessagePack>(COMM_NONE), 0, buf_offset + ws, bytes - ws);
+            do_dispatch(msgp, offset, buf_offset, bytes);
         }
     }
 
@@ -115,7 +103,7 @@ private:
             asio::buffer(read_buf_),
             [this, self, msgp, offset](std::error_code const &err, std::size_t bytes) {
                 if (!err) {
-                    divide_message_pack(msgp, offset, 0, bytes);
+                    do_divide_pack(msgp, offset, 0, bytes);
                 } else {
                     RAIN_DEBUG("Session read data failed: " + err.message());
                     remove();
@@ -127,10 +115,10 @@ private:
     {
         auto self = this->shared_from_this();
         socket_.async_write_some(
-            asio::buffer(msgp->data() + offset, msgp->size() - offset),
+            asio::buffer(msgp->data() + offset, msgp->pack_size() - offset),
             [this, self, msgp, offset](std::error_code const &err, std::size_t bytes) {
                 if (!err) {
-                    if (bytes < msgp->size() - offset) {
+                    if (bytes < msgp->pack_size() - offset) {
                         do_write(msgp, offset + bytes);
                     } else {
                         SessionMgr::get_instance().send_message_finished(self, msgp);
@@ -172,7 +160,49 @@ private:
     {
         auto msgp = std::make_shared<MessagePack>(COMM_FEEDBACK);
         msgp->write(id);
+        msgp->flush();
         write(msgp);
+    }
+
+    bool do_wrapper(MessagePackPtr msgp)
+    {
+        std::uint32_t id = 0;
+        msgp->read(id);
+        if (msgp->avail() < sizeof(MessageHeader)) {
+            remove();
+            return false;
+        }
+        do_feedback(id);
+
+        auto nmsgp = std::make_shared<MessagePack>(COMM_NONE, msgp->avail());
+        nmsgp->pos_write_size(0, msgp->data() + msgp->read_ptr(), msgp->avail());
+        nmsgp->write_ptr(int(msgp->avail() - sizeof(MessageHeader)));
+        SessionMgr::get_instance().dispatch_message(this->shared_from_this(), nmsgp);
+        return true;
+    }
+
+    void do_dispatch(MessagePackPtr msgp,
+                     std::size_t offset,
+                     std::size_t buf_offset,
+                     std::size_t bytes)
+    {
+        auto ws = msgp->pack_size() - offset;
+        msgp->write_size(read_buf_.data() + buf_offset, ws);
+
+        if (msgp->protocol() == COMM_PING) {
+            do_pong();
+        } else if (msgp->protocol() == COMM_PONG) {
+            ping_times_ = 0;
+        } else if (msgp->protocol() == COMM_FEEDBACK_WRAPPER) {
+            if (!do_wrapper(msgp)) {
+                return;
+            }
+        } else {
+            SessionMgr::get_instance().dispatch_message(this->shared_from_this(), msgp);
+        }
+        //std::cout << "Package Data Size: " << msgp->data_size() << std::endl;
+
+        do_divide_pack(std::make_shared<MessagePack>(COMM_NONE), 0, buf_offset + ws, bytes - ws);
     }
 
 private:

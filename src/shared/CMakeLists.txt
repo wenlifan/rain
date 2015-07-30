@@ -18,4 +18,6 @@ add_custom_target(rain_shared SOURCES
     common_app.hpp
     local_client_proxy.hpp
     local_server_proxy.hpp
+    byte_buffer.hpp
+    lua_binary.hpp
 )

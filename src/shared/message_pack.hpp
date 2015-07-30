@@ -1,119 +1,60 @@
 #pragma once
 
 #include <memory>
-#include <cstring>
-#include <cassert>
-#include <vector>
-#include <utility>
-#include <type_traits>
 
+#include "byte_buffer.hpp"
 #include "protocol.hpp"
+
+#include "lua_binary.hpp"
 
 namespace rain
 {
 
-class MessagePack
+#pragma pack(1)
+struct MessageHeader
 {
-public:
-    enum { HeaderSize = 6 };
+    std::uint32_t size;
+    Protocol proto;
+};
+#pragma pack(0)
+
+class MessagePack
+    : public ByteBuffer
+{
+    using PackSizeType = decltype(MessageHeader::size);
 
 public:
-    MessagePack(Protocol proto)
-            : data_(HeaderSize)
+    MessagePack(
+        Protocol proto = Protocol::COMM_NONE,
+        std::size_t init_size = sizeof(MessageHeader),
+        std::size_t growth = 128
+    )
+        : ByteBuffer(init_size, growth)
     {
-        auto s = std::uint32_t(0);
-        std::memcpy(data_.data(), &s, 4);
-        auto p = std::uint16_t(proto);
-        std::memcpy(data_.data() + 4, &p, 2);
+        write_ptr(sizeof(PackSizeType));
+        write(proto);
+        flush();
+        read_ptr(sizeof(MessageHeader));
     }
 
-    MessagePack(MessagePack &&mp) = default;
-    MessagePack & operator = (MessagePack &&) = default;
-
-    std::size_t capacity() const
+    std::size_t pack_size() const
     {
-        return data_.capacity();
-    }
-
-    std::size_t size() const
-    {
-        return data_.size();
-    }
-
-    std::size_t data_size() const
-    {
-        return std::size_t(*(std::uint32_t*)(data_.data()));
-    }
-
-    std::size_t avail() const
-    {
-        return data_.size() - read_ptr_;
+        std::uint32_t s;
+        pos_read(0, s);
+        return s;
     }
 
     Protocol protocol() const
     {
-        return Protocol(*(std::uint16_t*)(data_.data() + 4));
+        Protocol proto;
+        pos_read(sizeof(PackSizeType), proto);
+        return proto;
     }
 
-    char * data()
+    void flush()
     {
-        return data_.data();
+        pos_write(0, PackSizeType(write_ptr()));
     }
-
-    template <typename T>
-    void write(T &&t)
-    {
-        static_assert(std::is_pod<std::remove_reference_t<T>>::value,
-                      "Only accept POD data!");
-
-        write_size((char *)&t, sizeof(T));
-    }
-
-    void write_size(char const *data, std::size_t size)
-    {
-        raw_write_size(data, size);
-        auto s = std::uint32_t(data_.size() - HeaderSize);
-        std::memcpy(data_.data(), &s, 4);
-    }
-
-    void raw_write_size(char const *data, std::size_t size)
-    {
-        data_.resize(data_.size() + size);
-        std::memcpy(data_.data() + data_.size() - size, data, size);
-    }
-
-    template <typename T>
-    T read()
-    {
-        static_assert(std::is_pod<std::remove_reference_t<T>>::value,
-                      "Only accept POD data!");
-
-        assert(avail() >= sizeof(T));
-
-        T t;
-        read_size((char *)&t, sizeof(T));
-        return t;
-    }
-
-    void read_size(char *data, std::size_t size)
-    {
-        std::memcpy(data, data_.data() + read_ptr_, size);
-        read_ptr_ += size;
-    }
-
-    void read_ptr(int n)
-    {
-        read_ptr_ += n;
-    }
-
-    std::size_t read_ptr()
-    {
-        return read_ptr_;
-    }
-
-private:
-    std::vector<char> data_;
-    std::size_t read_ptr_ = 0;
 };
 
 using MessagePackPtr = std::shared_ptr<MessagePack>;
