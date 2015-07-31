@@ -16,7 +16,8 @@ public:
         : size_(init_size)
         , growth_(growth)
     {
-        data_ = static_cast<char *>(std::malloc(size_));
+        if (init_size != 0)
+            data_ = static_cast<char *>(std::malloc(size_));
     }
 
     ~ByteBuffer()

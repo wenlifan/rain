@@ -5,8 +5,6 @@
 #include "byte_buffer.hpp"
 #include "protocol.hpp"
 
-#include "lua_binary.hpp"
-
 namespace rain
 {
 

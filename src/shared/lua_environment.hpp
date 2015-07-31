@@ -27,6 +27,11 @@ public:
         lua_close(state_);
     }
 
+    lua_State * get_state() const
+    {
+        return state_;
+    }
+
     bool do_file(std::string const &fname)
     {
         if (luaL_dofile(state_, fname.c_str())) {
@@ -52,8 +57,13 @@ public:
         lua_pop(state_, 1);
     }
 
+    void call(std::string const &name)
+    {
+        call(name, nullptr);
+    }
+
     template <typename ...Args>
-    void call(std::string const & name, std::function<void(lua_State *)> callback, Args &&...args)
+    void call(std::string const &name, std::function<void(lua_State *)> callback, Args &&...args)
     {
         lua_pushcfunction(state_, stack_trace);
         lua_getglobal(state_, name.c_str());
